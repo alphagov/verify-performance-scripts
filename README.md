@@ -1,0 +1,4 @@
+# TODO
+
+ - [ ] Environment variables
+ - [ ] Dockerfile
