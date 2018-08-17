@@ -1,20 +1,23 @@
 SHELL := /bin/bash
 VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$VIRTUAL_ENV)
 
+# Create virtual environment and install a known stable version of pip.
 .PHONY: virtualenv
 virtualenv:
 	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && python3 -m venv venv || true
-	${VIRTUALENV_ROOT}/bin/pip install "pip >=18.0,<19.0"
 
+# Install non-dev dependencies.
 .PHONY: requirements
 requirements: virtualenv test-requirements requirements.txt
 	${VIRTUALENV_ROOT}/bin/pip install -r requirements.txt
 
+# Install dev dependencies.
 .PHONY: requirements-dev
 requirements-dev: virtualenv test-requirements requirements-dev.txt
 	${VIRTUALENV_ROOT}/bin/pip install -r requirements-dev.txt
 
-.PHONY: freeze-requirements
+# Freeze dependencies in `requirements-app.txt` into `requirements.txt`.
+.PHONY: virtualenv freeze-requirements
 freeze-requirements:
 	rm -rf venv-freeze
 	python3 -m venv venv-freeze
@@ -25,9 +28,11 @@ freeze-requirements:
 	$$(pwd)/venv-freeze/bin/pip freeze -r <(sed '/^--/d' requirements-app.txt) | sed -n '/The following requirements were added by pip freeze/,$$p' >> requirements.txt
 	rm -rf venv-freeze
 
+# Run all tests.
 .PHONY: test
 test: test-requirements test-flake8 test-unit
 
+# Ensure that all non-dev dependencies are present in `requirements.txt`.
 .PHONY: test-requirements
 test-requirements:
 	@diff requirements-app.txt requirements.txt | grep '<' \
@@ -35,14 +40,17 @@ test-requirements:
 	         echo "Run 'make freeze-requirements' to update."; exit 1; } \
 	    || { echo "requirements.txt is up to date"; exit 0; }
 
+# Enforce style guide.
 .PHONY: test-flake8
 test-flake8: virtualenv
 	${VIRTUALENV_ROOT}/bin/flake8 .
 
+# Run unit tests.
 .PHONY: test-unit
 test-unit: virtualenv
 	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
 
+# Build and tag Docker image.
 .PHONY: docker-build
 docker-build:
 	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
@@ -50,6 +58,7 @@ docker-build:
 	docker build -t digitalmarketplace/api --build-arg release_name=${RELEASE_NAME} .
 	docker tag digitalmarketplace/api digitalmarketplace/api:${RELEASE_NAME}
 
+# Push image to Docker Hub.
 .PHONY: docker-push
 docker-push:
 	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
