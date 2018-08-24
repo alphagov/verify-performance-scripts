@@ -4,3 +4,14 @@ __pycache__
 .cache
 
 .env
+verify-performance-scripts-env
+
+# Intellij Project files
+*.idea
+*.iml
+
+# OSX system files
+.DS_Store
+
+# Vim
+*.swp
