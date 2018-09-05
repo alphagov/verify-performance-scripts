@@ -9,13 +9,16 @@ Usage:
 
 import argparse
 import boto3
+from env import check_get_env
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv(override=True)
 
+
 AWS_TARGET_PROFILE = os.getenv('AWS_TARGET_PROFILE')
-RP_REPORT_OUTPUT_BUCKET = os.getenv('RP_REPORT_OUTPUT_BUCKET')
+RP_REPORT_OUTPUT_BUCKET = check_get_env('RP_REPORT_OUTPUT_BUCKET')
 
 
 def get_aws_session():
@@ -40,11 +43,8 @@ def upload_file(file_name):
 
 
 def main(file_name):
-    try:
-        upload_file(file_name)
-        print('File uploaded successfully.')
-    except Exception as e:
-        print('Failed to upload file due to error:', e)
+    upload_file(file_name)
+    print('File uploaded successfully.')
 
 
 if __name__ == '__main__':
