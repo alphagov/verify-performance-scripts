@@ -1,7 +1,7 @@
 # TODO
 
 - [x] Environment variables
-- [ ] Example `.env`
+- [x] Example `.env`
 - [x] Accept MFA for local execution 
 - [ ] Consistent with [GDS Way](https://gds-way.cloudapps.digital/manuals/programming-languages/python/python.html#writing-python-at-gds)
 - [ ] Unit tests
