@@ -5,6 +5,7 @@ VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$V
 .PHONY: virtualenv
 virtualenv:
 	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && python3 -m venv venv || true
+	${VIRTUALENV_ROOT}/bin/pip install "pip >=18.0,<19.0"
 
 # Install non-dev dependencies.
 .PHONY: requirements
