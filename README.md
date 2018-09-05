@@ -1,28 +1,27 @@
 # TODO
 
-- [ ] Environment variables
+- [x] Environment variables
 - [ ] Example `.env`
-- [ ] Accept MFA for local execution 
+- [x] Accept MFA for local execution 
 - [ ] Consistent with [GDS Way](https://gds-way.cloudapps.digital/manuals/programming-languages/python/python.html#writing-python-at-gds)
 - [ ] Unit tests
 - [ ] Dockerfile
-
 
 ### Developer Setup 
 
 #### Install prerequisites
 
 - Python 3
-  ```
+  ```bash
   brew install python3
   ```
-- Precommit - for installing hooks that run final checks before allowing push to repositories
-  ```
+- Pre-commit - for installing hooks that run final checks before allowing push to repositories
+  ```bash
   brew install pre-commit
   ```
   
 #### Set up dependencies
-```
+```bash
 make requirements-dev
 ```
 
@@ -57,3 +56,28 @@ To exit the virtual environment:
 ```
 deactivate
 ```
+
+#### Running tests
+Tests can be run by executing `make test`.
+
+#### Git hooks
+We are using `pre-commit` to setup Git hooks automatically based on configurations defined within 
+`.pre-commit-config.yaml`. 
+
+In order to setup the hooks, you should execute the `./pre-commit` script provided with this 
+repository. It will ask you to install `pre-commit` if it isn't already installed. It will use 
+`pre-commit` to automatically install pre-push Git hooks in order to only allow push if tests 
+pass.
+
+#### Installing dependencies
+Application and development dependencies are specified in `requirements-app.txt` and 
+`requirements-dev.txt` respectively.
+
+If you need to install dependencies for local development, execute `make requirements-dev`. This 
+will install application as well as development dependencies. 
+
+You can freeze your versions of 
+application dependencies by running `make freeze-requirements`, which will generate 
+`requirements.txt` containing the specific versions of application dependencies installed on your 
+environment. Building reproducible environments then becomes easier by executing 
+`make requirements`, which will only install dependencies specified in `requirements.txt`.
