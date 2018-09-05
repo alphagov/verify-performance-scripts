@@ -15,6 +15,14 @@
   ```bash
   brew install python3
   ```
+  If you want to install a specific Python version, then you can do this using pyenv:
+  ```bash
+  brew install pyenv
+  eval "$(pyenv init -)"  # note this should go in your .bash_profile
+  pyenv install 3.6.6
+  pyenv global 3.6.6
+  ```
+
 - Pre-commit - for installing hooks that run final checks before allowing push to repositories
   ```bash
   brew install pre-commit
