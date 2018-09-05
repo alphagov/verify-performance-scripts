@@ -10,19 +10,17 @@ Usage:
 import argparse
 import boto3
 from env import check_get_env
-import os
 from dotenv import load_dotenv
 
 
 load_dotenv(override=True)
 
 
-AWS_TARGET_PROFILE = os.getenv('AWS_TARGET_PROFILE')
 RP_REPORT_OUTPUT_BUCKET = check_get_env('RP_REPORT_OUTPUT_BUCKET')
 
 
 def get_aws_session():
-    return boto3.Session(profile_name=AWS_TARGET_PROFILE)
+    return boto3.Session()
 
 
 def get_s3_resource():
