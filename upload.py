@@ -47,6 +47,6 @@ def main(file_name):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--filename', help='File to upload', type=str)
+    parser.add_argument('filename', help='File to upload', type=str)
     args = parser.parse_args()
     main(args.filename)
