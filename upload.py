@@ -12,9 +12,7 @@ import boto3
 from scripts.env import check_get_env
 from dotenv import load_dotenv
 
-
 load_dotenv(override=True)
-
 
 RP_REPORT_OUTPUT_BUCKET = check_get_env('RP_REPORT_OUTPUT_BUCKET')
 
@@ -37,7 +35,7 @@ def upload_file(file_name):
     """
     s3 = get_s3_resource()
     bucket = s3.Bucket(RP_REPORT_OUTPUT_BUCKET)
-    bucket.upload_file(file_name, 'output/rp/'.join(file_name), {'ServerSideEncryption': 'AES256'})
+    bucket.upload_file(file_name, f'output/rp/{file_name}', {'ServerSideEncryption': 'AES256'})
 
 
 def main(file_name):
