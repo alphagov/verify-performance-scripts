@@ -9,7 +9,7 @@ Usage:
 
 import argparse
 import boto3
-from env import check_get_env
+from scripts.env import check_get_env
 from dotenv import load_dotenv
 
 
