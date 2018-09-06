@@ -5,6 +5,7 @@ VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$V
 .PHONY: virtualenv
 virtualenv:
 	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && python3 -m venv venv || true
+	${VIRTUALENV_ROOT}/bin/pip install "pip >=18.0,<19.0"
 
 # Install non-dev dependencies.
 .PHONY: requirements
@@ -49,17 +50,3 @@ test-flake8: virtualenv
 .PHONY: test-unit
 test-unit: virtualenv
 	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
-
-# Build and tag Docker image.
-.PHONY: docker-build
-docker-build:
-	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
-	@echo "Building a docker image for ${RELEASE_NAME}..."
-	docker build -t digitalmarketplace/api --build-arg release_name=${RELEASE_NAME} .
-	docker tag digitalmarketplace/api digitalmarketplace/api:${RELEASE_NAME}
-
-# Push image to Docker Hub.
-.PHONY: docker-push
-docker-push:
-	$(if ${RELEASE_NAME},,$(eval export RELEASE_NAME=$(shell git describe)))
-	docker push digitalmarketplace/api:${RELEASE_NAME}
