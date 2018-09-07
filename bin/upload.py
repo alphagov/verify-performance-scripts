@@ -4,7 +4,7 @@
 Upload a file to S3.
 
 Usage:
-    python3 upload.py -f <file-name>
+    python3 upload.py <file-name>
 """
 
 import bootstrap  # noqa
