@@ -9,8 +9,8 @@ Usage:
 
 import bootstrap  # noqa
 import argparse
-from utils.env import check_get_env
-from utils import aws
+from performance.env import check_get_env
+from performance import aws
 from performance.uploader import Uploader
 
 RP_REPORT_OUTPUT_BUCKET = check_get_env('RP_REPORT_OUTPUT_BUCKET')
