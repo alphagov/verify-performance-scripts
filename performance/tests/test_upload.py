@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, ANY
 
 from performance.uploader import Uploader
 
@@ -11,5 +11,5 @@ def test_upload():
 
     uploader.upload('bucket_name', 'file_name')
 
-    aws_resource_mock.Bucket.assert_called()
-    bucket.upload_file.assert_called()
+    aws_resource_mock.Bucket.assert_called_with('bucket_name')
+    bucket.upload_file.assert_called_with('file_name', ANY, ANY)
