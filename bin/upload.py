@@ -7,7 +7,7 @@ Usage:
     python3 upload.py -f <file-name>
 """
 
-import bootstrap
+import bootstrap  # noqa
 import argparse
 from utils.env import check_get_env
 from utils import aws
