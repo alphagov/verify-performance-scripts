@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$VIRTUAL_ENV)
+PYTEST_ARGS := -s
 
 # Create virtual environment and install a known stable version of pip.
 .PHONY: virtualenv
