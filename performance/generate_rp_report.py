@@ -1,11 +1,10 @@
-# coding: utf-8
+"""
+Generate RP reports from Piwik and Successful verifications data
 
-# **This notebook is Work In Progress, and we do not yet consider its output ready to be shared with Relying Parties.**
-
-# To run, this notebook needs (in your `verify-data-pipeline-config` directory):
-#     - A week of verifications by rp data
-#     - Piwik creds
-
+expects: the following files to be present in verify-data-pipeline-config:
+verifications_by_rp_<for-required-week>.csv
+piwik configuration in piwik.json
+"""
 
 import pandas as pd
 import json
@@ -22,7 +21,7 @@ verify_data_pipeline_config_path = '../../verify-data-pipeline-config'
 verifications_by_rp_csv = \
     f'{verify_data_pipeline_config_path}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
 report_output_path = '../output'
-env = 'prod'  # or 'dr' - the script cannot yet draw data from both
+env = 'prod'
 
 if env == 'prod':
     base_url = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
@@ -39,7 +38,6 @@ def get_piwik_token(env):
 token = get_piwik_token(env)
 
 df_verifications_by_rp = pd.read_csv(verifications_by_rp_csv)
-print(df_verifications_by_rp)
 
 
 def get_nb_visits_for_page(date, period, token, limit, segment):
@@ -56,11 +54,9 @@ def get_nb_visits_for_page(date, period, token, limit, segment):
     }
 
     response = requests.get(base_url, qs)
-    print(response.url)
 
     raw_result = response.json()
     nb_visits = next(iter(raw_result), {}).get('nb_visits', 0)
-    print(nb_visits)
     return nb_visits
 
 
@@ -83,7 +79,6 @@ def get_nb_visits_for_rp(date, period, token, limit, segment):
     }
 
     response = requests.get(base_url, qs)
-    print(response.url)
 
     raw_result = response.json()
     return raw_result.get('value', 0)
@@ -92,8 +87,6 @@ def get_nb_visits_for_rp(date, period, token, limit, segment):
 # rp_mapping translates the referrer url reported in the verifications csv
 with open(f'{verify_data_pipeline_config_path}/configuration/rp_mapping.json') as ft:
     rp_mapping = json.load(ft)
-
-print(rp_mapping)
 
 
 def get_rp_name(rp_entity_id):
@@ -115,18 +108,14 @@ df_totals.drop(['Timestamp', 'RP Entity Id'], axis=1, inplace=True)
 
 df_totals = df_totals.rename(columns={'IDP Entity Id': 'successes'})
 
-print(df_totals)
-
 df_all = pd.pivot_table(df_totals, values='successes', index='rp', columns='response_type')
 df_all.reset_index(inplace=True)
 df_all.columns = ['rp', 'signup_success', 'signin_success']
-print(df_all)
 
 # ### Success rate (sign in)
 
 
 ls_rp = list(df_verifications_by_rp.rp.unique())
-print(ls_rp)
 
 df = pd.DataFrame()
 
@@ -142,21 +131,15 @@ for rp in ls_rp:
     segment_single_idp = f"{segment_by_rp};customVariableValue3==SINGLE_IDP"
     single_idp_attempts = get_nb_visits_for_rp(date_start_string, period, token, limit, segment_single_idp)
 
-    print(all_referrals, signup_attempts, signin_attempts, single_idp_attempts)
     # TODO if the RP is not found (e.g. due to no successful signins) then we may need to add a row?
     df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
     df_all.loc[(df_all['rp'] == rp), 'signin_attempt'] = signin_attempts
     df_all.loc[(df_all['rp'] == rp), 'signup_attempt'] = signup_attempts
     df_all.loc[(df_all['rp'] == rp), 'single_idp_attempt'] = single_idp_attempts
 
-print(df_all)
-
 df_all['signin_rate (deprecated)'] = df_all['signin_success'] / df_all['signin_attempt']
 df_all['signup_rate (deprecated)'] = df_all['signup_success'] / df_all['signup_attempt']
 
-print(df_all)
-
-# Further calculations we think might be more useful
 df_all['all_referrals_with_intent'] = df_all['signin_attempt'] + df_all['signup_attempt'] + df_all['single_idp_attempt']
 
 df_all['success'] = df_all['signin_success'] + df_all['signup_success']
@@ -171,11 +154,8 @@ df_all['success_signin_rate'] = df_all['signin_success'] / df_all['all_referrals
 df_all['dropout'] = df_all['all_referrals_with_intent'] - df_all['signin_success'] - df_all['signup_success']
 df_all['dropout_rate'] = df_all['dropout'] / df_all['all_referrals_with_intent']
 
-print(df_all)
-
 # ### Ineligible (will not work / might not work) - with journey type segment
 # upvson 'GOV.UK Verify will not work for you' page, segmented by 'registration' custom variable
-
 
 # TODO this should come from config
 loa1_rp_list = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
@@ -197,8 +177,6 @@ for rp in ls_rp:
         visits_might_not_work = get_nb_visits_for_page(date_start_string, period, token, limit, might_not_work_segment)
         row = df_all.loc[(df_all['rp'] == rp), 'visits_will_not_work'] = visits_will_not_work
         row = df_all.loc[(df_all['rp'] == rp), 'visits_might_not_work'] = visits_might_not_work
-
-print(df_all)
 
 # ## Export results
 
