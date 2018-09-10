@@ -12,6 +12,7 @@ import json
 import requests
 import os
 from datetime import date, timedelta
+from performance.piwikclient import PiwikClient
 
 VERIFY_DATA_PIPELINE_CONFIG_PATH = '../../verify-data-pipeline-config'
 PIWIK_BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
@@ -50,47 +51,27 @@ def get_nb_visits_for_page(date, period, token, limit, segment):
     return nb_visits
 
 
-def get_nb_visits_for_rp(date, period, token, limit, segment):
-    qs = {
-        'module': 'API',
-        'idSite': '1',
-        'format': 'JSON',
-        'filter_limit': limit,
-        'date': date,
-        'period': period,
-        'method': 'VisitsSummary.getVisits',
-        'expanded': '1',
-        'token_auth': token,
-        'segment': segment
-    }
-
-    response = requests.get(PIWIK_BASE_URL, qs)
-
-    raw_result = response.json()
-    return raw_result.get('value', 0)
-
-
-def get_all_referrals_from_piwik(rp, date_start_string, token):
+def get_all_referrals_from_piwik(piwik_client, rp, date_start_string):
     segment_by_rp = f"customVariableValue1=={rp}"
-    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_by_rp)
+    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_by_rp)
 
 
-def get_all_signin_attempts_for_rp_from_piwik(rp, date_start_string, token):
+def get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
     segment_by_rp = f"customVariableValue1=={rp}"
     segment_signin = f"{segment_by_rp};customVariableValue3==SIGN_IN"
-    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_signin)
+    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_signin)
 
 
-def get_all_signup_attempts_for_rp_from_piwik(rp, date_start_string, token):
+def get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
     segment_by_rp = f"customVariableValue1=={rp}"
     segment_signup = f"{segment_by_rp};customVariableValue3==REGISTRATION"
-    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_signup)
+    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_signup)
 
 
-def get_all_single_idp_attempts_for_rp_from_piwik(rp, date_start_string, token):
+def get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
     segment_by_rp = f"customVariableValue1=={rp}"
     segment_single_idp = f"{segment_by_rp};customVariableValue3==SINGLE_IDP"
-    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_single_idp)
+    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_single_idp)
 
 
 def get_visits_will_not_work_from_piwik(rp, date_start_string, token):
@@ -132,6 +113,9 @@ def run():
     report_output_path = params.report_output_path
 
     token = get_piwik_token(ENV)
+
+    piwik_client = PiwikClient(token, PIWIK_BASE_URL)
+
     df_verifications_by_rp = pd.read_csv(verifications_by_rp_csv)
     # ## Getting the volume of sessions for sign up and sign in
     # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
@@ -158,13 +142,13 @@ def run():
     for rp in ls_rp:
         print("Getting data for {}".format(rp))
 
-        all_referrals = get_all_referrals_from_piwik(rp, date_start_string, token)
+        all_referrals = get_all_referrals_from_piwik(piwik_client, rp, date_start_string)
 
-        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(rp, date_start_string, token)
+        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
 
-        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(rp, date_start_string, token)
+        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
 
-        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(rp, date_start_string, token)
+        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
 
         # TODO if the RP is not found (e.g. due to no successful signins) then we may need to add a row?
         df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
