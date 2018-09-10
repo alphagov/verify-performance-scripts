@@ -14,8 +14,11 @@ import os
 from datetime import date, timedelta
 
 VERIFY_DATA_PIPELINE_CONFIG_PATH = '../../verify-data-pipeline-config'
-BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
+PIWIK_BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
 ENV = 'prod'
+
+PIWIK_PERIOD = 'week'
+PIWIK_LIMIT = '-1'
 
 # TODO this should come from config
 LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
@@ -40,7 +43,7 @@ def get_nb_visits_for_page(date, period, token, limit, segment):
         'segment': segment,
     }
 
-    response = requests.get(BASE_URL, qs)
+    response = requests.get(PIWIK_BASE_URL, qs)
 
     raw_result = response.json()
     nb_visits = next(iter(raw_result), {}).get('nb_visits', 0)
@@ -61,10 +64,48 @@ def get_nb_visits_for_rp(date, period, token, limit, segment):
         'segment': segment
     }
 
-    response = requests.get(BASE_URL, qs)
+    response = requests.get(PIWIK_BASE_URL, qs)
 
     raw_result = response.json()
     return raw_result.get('value', 0)
+
+
+def get_all_referrals_from_piwik(rp, date_start_string, token):
+    segment_by_rp = f"customVariableValue1=={rp}"
+    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_by_rp)
+
+
+def get_all_signin_attempts_for_rp_from_piwik(rp, date_start_string, token):
+    segment_by_rp = f"customVariableValue1=={rp}"
+    segment_signin = f"{segment_by_rp};customVariableValue3==SIGN_IN"
+    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_signin)
+
+
+def get_all_signup_attempts_for_rp_from_piwik(rp, date_start_string, token):
+    segment_by_rp = f"customVariableValue1=={rp}"
+    segment_signup = f"{segment_by_rp};customVariableValue3==REGISTRATION"
+    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_signup)
+
+
+def get_all_single_idp_attempts_for_rp_from_piwik(rp, date_start_string, token):
+    segment_by_rp = f"customVariableValue1=={rp}"
+    segment_single_idp = f"{segment_by_rp};customVariableValue3==SINGLE_IDP"
+    return get_nb_visits_for_rp(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, segment_single_idp)
+
+
+def get_visits_will_not_work_from_piwik(rp, date_start_string, token):
+    will_not_work_page = "@GOV.UK Verify will not work for you - GOV.UK Verify - GOV.UK - LEVEL_2"
+    will_not_work_segment = "pageTitle={};customVariableValue1=={};customVariableValue3==REGISTRATION".format(
+        will_not_work_page, rp)
+
+    return get_nb_visits_for_page(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, will_not_work_segment)
+
+
+def get_visits_might_not_work_from_piwik(rp, date_start_string, token):
+    might_not_work_page = "@Why might this not work for me - GOV.UK Verify - GOV.UK - LEVEL_2"
+    might_not_work_segment = "pageTitle={};customVariableValue1=={};customVariableValue3==REGISTRATION".format(
+        might_not_work_page, rp)
+    return get_nb_visits_for_page(date_start_string, PIWIK_PERIOD, token, PIWIK_LIMIT, might_not_work_segment)
 
 
 def is_loa2(rp):
@@ -83,8 +124,6 @@ def load_args_from_command_line():
 
 def run():
     params = load_args_from_command_line()
-    period = 'week'
-    limit = '-1'
     date_start = date.fromisoformat(params.report_start_date)
     date_end = date_start + timedelta(days=6)
     date_start_string = params.report_start_date
@@ -118,15 +157,14 @@ def run():
     ls_rp = list(df_verifications_by_rp.rp.unique())
     for rp in ls_rp:
         print("Getting data for {}".format(rp))
-        segment_by_rp = f"customVariableValue1=={rp}"
-        all_referrals = get_nb_visits_for_rp(date_start_string, period, token, limit, segment_by_rp)
-        segment_signin = f"{segment_by_rp};customVariableValue3==SIGN_IN"
-        signin_attempts = get_nb_visits_for_rp(date_start_string, period, token, limit, segment_signin)
-        segment_signup = f"{segment_by_rp};customVariableValue3==REGISTRATION"
-        signup_attempts = get_nb_visits_for_rp(date_start_string, period, token, limit, segment_signup)
 
-        segment_single_idp = f"{segment_by_rp};customVariableValue3==SINGLE_IDP"
-        single_idp_attempts = get_nb_visits_for_rp(date_start_string, period, token, limit, segment_single_idp)
+        all_referrals = get_all_referrals_from_piwik(rp, date_start_string, token)
+
+        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(rp, date_start_string, token)
+
+        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(rp, date_start_string, token)
+
+        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(rp, date_start_string, token)
 
         # TODO if the RP is not found (e.g. due to no successful signins) then we may need to add a row?
         df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
@@ -149,16 +187,10 @@ def run():
     # upvson 'GOV.UK Verify will not work for you' page, segmented by 'registration' custom variable
     for rp in ls_rp:
         if is_loa2(rp):
-            will_not_work_page = "@GOV.UK Verify will not work for you - GOV.UK Verify - GOV.UK - LEVEL_2"
-            will_not_work_segment = "pageTitle={};customVariableValue1=={};customVariableValue3==REGISTRATION".format(
-                will_not_work_page, rp)
-            visits_will_not_work = get_nb_visits_for_page(date_start_string, period, token, limit,
-                                                          will_not_work_segment)
-            might_not_work_page = "@Why might this not work for me - GOV.UK Verify - GOV.UK - LEVEL_2"
-            might_not_work_segment = "pageTitle={};customVariableValue1=={};customVariableValue3==REGISTRATION".format(
-                might_not_work_page, rp)
-            visits_might_not_work = get_nb_visits_for_page(date_start_string, period, token, limit,
-                                                           might_not_work_segment)
+            visits_will_not_work = get_visits_will_not_work_from_piwik(rp, date_start_string, token)
+
+            visits_might_not_work = get_visits_might_not_work_from_piwik(rp, date_start_string, token)
+
             df_all.loc[(df_all['rp'] == rp), 'visits_will_not_work'] = visits_will_not_work
             df_all.loc[(df_all['rp'] == rp), 'visits_might_not_work'] = visits_might_not_work
     # ## Export results
