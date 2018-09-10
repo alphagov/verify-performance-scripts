@@ -5,6 +5,7 @@ expects: the following files to be present in verify-data-pipeline-config:
 verifications_by_rp_<for-required-week>.csv
 piwik configuration in piwik.json
 """
+import argparse
 
 import pandas as pd
 import json
@@ -12,30 +13,44 @@ import requests
 import os
 from datetime import date, timedelta
 
+VERIFY_DATA_PIPELINE_CONFIG_PATH = '../../verify-data-pipeline-config'
+
+
+def load_args_from_command_line():
+    parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument('--report_start_date', help='expected format: YYYY-MM-DD', required=True)
+    parser.add_argument('--report_output_path', help='relative path to output report CSV', default='../output')
+
+    args = parser.parse_args()
+    return args
+
+
+params = load_args_from_command_line()
+
 period = 'week'
 limit = '-1'
-date_start = date(2018, 7, 23)
+date_start = date.fromisoformat(params.report_start_date)
 date_end = date_start + timedelta(days=6)
-date_start_string = date_start.isoformat()
-verify_data_pipeline_config_path = '../../verify-data-pipeline-config'
+date_start_string = params.report_start_date
 verifications_by_rp_csv = \
-    f'{verify_data_pipeline_config_path}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
-report_output_path = '../output'
-env = 'prod'
+    f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
+report_output_path = params.report_output_path
+ENV = 'prod'
 
-if env == 'prod':
-    base_url = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
+if ENV == 'prod':
+    BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
 else:
-    base_url = 'https://analytics-hub-dr-dmz.ida.digital.cabinet-office.gov.uk/index.php'
+    BASE_URL = 'https://analytics-hub-dr-dmz.ida.digital.cabinet-office.gov.uk/index.php'
 
 
 def get_piwik_token(env):
-    with open(f'{verify_data_pipeline_config_path}/credentials/piwik_token.json') as fileHandle:
+    with open(f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/credentials/piwik_token.json') as fileHandle:
         token = json.load(fileHandle)['production' if env == 'prod' else 'dr_token']
         return token
 
 
-token = get_piwik_token(env)
+token = get_piwik_token(ENV)
 
 df_verifications_by_rp = pd.read_csv(verifications_by_rp_csv)
 
@@ -53,7 +68,7 @@ def get_nb_visits_for_page(date, period, token, limit, segment):
         'segment': segment,
     }
 
-    response = requests.get(base_url, qs)
+    response = requests.get(BASE_URL, qs)
 
     raw_result = response.json()
     nb_visits = next(iter(raw_result), {}).get('nb_visits', 0)
@@ -78,14 +93,14 @@ def get_nb_visits_for_rp(date, period, token, limit, segment):
         'segment': segment
     }
 
-    response = requests.get(base_url, qs)
+    response = requests.get(BASE_URL, qs)
 
     raw_result = response.json()
     return raw_result.get('value', 0)
 
 
 # rp_mapping translates the referrer url reported in the verifications csv
-with open(f'{verify_data_pipeline_config_path}/configuration/rp_mapping.json') as ft:
+with open(f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/configuration/rp_mapping.json') as ft:
     rp_mapping = json.load(ft)
 
 
