@@ -41,6 +41,17 @@ def test_get_all_referrals_from_piwik(mock_get_nb_visits_for_rp):
     assert all_referrals == nb_visits_for_rp
 
 
+def test_get_segment_query_string_for_rp_journey_type_and_page_title():
+    rp_name = 'rp_name'
+    journey_type = 'journey_type'
+    page_title = 'page_title'
+    expected_segment_string = "customVariableValue1==rp_name;customVariableValue3==journey_type;pageTitle=page_title"
+
+    segment_string = generate_rp_report.get_segment_query_string(rp_name, journey_type, page_title)
+
+    assert expected_segment_string == segment_string
+
+
 def test_get_segment_query_string_for_rp_and_journey_type():
     rp_name = 'rp_name'
     journey_type = 'journey_type'
@@ -58,3 +69,37 @@ def test_get_segment_query_string_for_rp_only():
     segment_string = generate_rp_report.get_segment_query_string(rp_name)
 
     assert segment_string == expected_segment_string
+
+
+@patch.object(PiwikClient, 'get_nb_visits_for_page')
+def test_get_visits_will_not_work_from_piwik(mock_get_nb_visits_for_page):
+    date_start = 'date-start'
+    rp_name = 'rp_name'
+    piwik_client = PiwikClient('token', 'url')
+    nb_visits_for_page = 1
+    mock_get_nb_visits_for_page.return_value = nb_visits_for_page
+    expected_segment_string = \
+        "customVariableValue1==rp_name;customVariableValue3==REGISTRATION;" \
+        "pageTitle=@GOV.UK Verify will not work for you - GOV.UK Verify - GOV.UK - LEVEL_2"
+
+    visits_will_not_work = generate_rp_report.get_visits_will_not_work_from_piwik(piwik_client, rp_name, date_start)
+
+    mock_get_nb_visits_for_page.assert_called_with(date_start, expected_segment_string)
+    assert visits_will_not_work == nb_visits_for_page
+
+
+@patch.object(PiwikClient, 'get_nb_visits_for_page')
+def test_get_visits_might_not_work_from_piwik(mock_get_nb_visits_for_page):
+    date_start = 'date-start'
+    rp_name = 'rp_name'
+    piwik_client = PiwikClient('token', 'url')
+    nb_visits_for_page = 1
+    mock_get_nb_visits_for_page.return_value = nb_visits_for_page
+    expected_segment_string = \
+        "customVariableValue1==rp_name;customVariableValue3==REGISTRATION;" \
+        "pageTitle=@Why might this not work for me - GOV.UK Verify - GOV.UK - LEVEL_2"
+
+    visits_might_not_work = generate_rp_report.get_visits_might_not_work_from_piwik(piwik_client, rp_name, date_start)
+
+    mock_get_nb_visits_for_page.assert_called_with(date_start, expected_segment_string)
+    assert visits_might_not_work == nb_visits_for_page

@@ -32,3 +32,22 @@ class PiwikClient:
 
         raw_result = response.json()
         return raw_result.get('value', 0)
+
+    def get_nb_visits_for_page(self, date, segment):
+        qs = {
+            'module': 'API',
+            'idSite': '1',
+            'format': 'JSON',
+            'filter_limit': self.PIWIK_LIMIT,
+            'date': date,
+            'period': self.PIWIK_PERIOD,
+            'method': 'Actions.getPageTitles',
+            'token_auth': self.token,
+            'segment': segment,
+        }
+
+        response = requests.get(self.piwik_base_url, qs)
+
+        raw_result = response.json()
+        nb_visits = next(iter(raw_result), {}).get('nb_visits', 0)
+        return nb_visits
