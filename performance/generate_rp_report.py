@@ -21,6 +21,7 @@ ENV = 'prod'
 PIWIK_PERIOD = 'week'
 PIWIK_LIMIT = '-1'
 
+
 # TODO this should come from config
 LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
 
@@ -51,27 +52,36 @@ def get_nb_visits_for_page(date, period, token, limit, segment):
     return nb_visits
 
 
-def get_all_referrals_from_piwik(piwik_client, rp, date_start_string):
-    segment_by_rp = f"customVariableValue1=={rp}"
+def get_segment_query_string(rp_name, journey_type=None):
+    segment = f"customVariableValue1=={rp_name}"
+    if journey_type:
+        segment += f";customVariableValue3=={journey_type}"
+    return segment
+
+
+def get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp_name, journey_type):
+    segment = get_segment_query_string(rp_name, journey_type)
+    return piwik_client.get_nb_visits_for_rp(date_start_string, segment)
+
+
+def get_all_referrals_for_rp_from_piwik(piwik_client, rp, date_start_string):
+    segment_by_rp = get_segment_query_string(rp)
     return piwik_client.get_nb_visits_for_rp(date_start_string, segment_by_rp)
 
 
 def get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
-    segment_by_rp = f"customVariableValue1=={rp}"
-    segment_signin = f"{segment_by_rp};customVariableValue3==SIGN_IN"
-    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_signin)
+    journey_type = 'SIGN_IN'
+    return get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp, journey_type)
 
 
 def get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
-    segment_by_rp = f"customVariableValue1=={rp}"
-    segment_signup = f"{segment_by_rp};customVariableValue3==REGISTRATION"
-    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_signup)
+    journey_type = 'REGISTRATION'
+    return get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp, journey_type)
 
 
 def get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
-    segment_by_rp = f"customVariableValue1=={rp}"
-    segment_single_idp = f"{segment_by_rp};customVariableValue3==SINGLE_IDP"
-    return piwik_client.get_nb_visits_for_rp(date_start_string, segment_single_idp)
+    journey_type = 'SINGLE_IDP'
+    return get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp, journey_type)
 
 
 def get_visits_will_not_work_from_piwik(rp, date_start_string, token):
@@ -142,7 +152,7 @@ def run():
     for rp in ls_rp:
         print("Getting data for {}".format(rp))
 
-        all_referrals = get_all_referrals_from_piwik(piwik_client, rp, date_start_string)
+        all_referrals = get_all_referrals_for_rp_from_piwik(piwik_client, rp, date_start_string)
 
         signin_attempts = get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
 
