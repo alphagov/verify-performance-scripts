@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from performance.piwikclient import PiwikClient
 
 
@@ -27,21 +27,30 @@ def sample_get_page_titles_response(nb_visits_value):
 def test_get_nb_visits_for_rp(mock_requests_get):
     mock_requests_get.return_value.json.return_value = {"value": 5}
     date = "test-date"
-    token = "test-piwik-token"
+    piwik_token = "test-piwik-token"
+    piwik_period = 'week'
+    piwik_filter_limit = '-1'
+    piwik_base_url = 'url'
     segment = "test-segment"
-    piwik_base_url = "piwik-url"
-    piwik_client = PiwikClient(token, piwik_base_url)
+
+    mock_config = Mock()
+    mock_config.PIWIK_PERIOD = piwik_period
+    mock_config.PIWIK_LIMIT = piwik_filter_limit
+    mock_config.PIWIK_BASE_URL = piwik_base_url
+    mock_config.PIWIK_AUTH_TOKEN = piwik_token
+
+    piwik_client = PiwikClient(mock_config)
 
     expected_piwik_query_string = {
         'module': 'API',
         'idSite': '1',
         'format': 'JSON',
-        'filter_limit': '-1',
+        'filter_limit': piwik_filter_limit,
         'date': date,
-        'period': 'week',
+        'period': piwik_period,
         'method': 'VisitsSummary.getVisits',
         'expanded': '1',
-        'token_auth': token,
+        'token_auth': piwik_token,
         'segment': segment
     }
 
@@ -57,20 +66,29 @@ def test_get_nb_visits_for_page(mock_requests_get):
     mock_requests_get.return_value.json.return_value = sample_get_page_titles_response(nb_visits_value)
 
     date = "test-date"
-    token = "test-piwik-token"
+    piwik_token = "test-piwik-token"
+    piwik_period = 'week'
+    piwik_filter_limit = '-1'
+    piwik_base_url = 'url'
     segment = "test-segment"
-    piwik_base_url = "piwik-url"
-    piwik_client = PiwikClient(token, piwik_base_url)
+
+    mock_config = Mock()
+    mock_config.PIWIK_PERIOD = piwik_period
+    mock_config.PIWIK_LIMIT = piwik_filter_limit
+    mock_config.PIWIK_BASE_URL = piwik_base_url
+    mock_config.PIWIK_AUTH_TOKEN = piwik_token
+
+    piwik_client = PiwikClient(mock_config)
 
     expected_piwik_query_string = {
         'module': 'API',
         'idSite': '1',
         'format': 'JSON',
-        'filter_limit': '-1',
+        'filter_limit': piwik_filter_limit,
         'date': date,
-        'period': 'week',
+        'period': piwik_period,
         'method': 'Actions.getPageTitles',
-        'token_auth': token,
+        'token_auth': piwik_token,
         'segment': segment
     }
 

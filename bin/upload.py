@@ -9,7 +9,7 @@ Usage:
 
 import bootstrap  # noqa
 import argparse
-from performance.env import check_get_env
+from performance.config import check_get_env
 from performance import aws
 from performance.uploader import Uploader
 

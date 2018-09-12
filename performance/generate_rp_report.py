@@ -11,24 +11,10 @@ import pandas
 import json
 import os
 from datetime import date, timedelta
-from performance.piwikclient import PiwikClient
-
-VERIFY_DATA_PIPELINE_CONFIG_PATH = '../../verify-data-pipeline-config'
-PIWIK_BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
-ENV = 'prod'
-
-PIWIK_PERIOD = 'week'
-PIWIK_LIMIT = '-1'
-
+from . import piwik_client, config
 
 # TODO this should come from config
 LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
-
-
-def get_piwik_token(env):
-    with open(f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/credentials/piwik_token.json') as fileHandle:
-        token = json.load(fileHandle)['production' if env == 'prod' else 'dr_token']
-        return token
 
 
 def get_segment_query_string(rp_name, journey_type=None, page_title=None):
@@ -40,32 +26,32 @@ def get_segment_query_string(rp_name, journey_type=None, page_title=None):
     return segment
 
 
-def get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp_name, journey_type):
+def get_all_visits_for_rp_and_journey_type_from_piwik(date_start_string, rp_name, journey_type):
     segment = get_segment_query_string(rp_name, journey_type)
     return piwik_client.get_nb_visits_for_rp(date_start_string, segment)
 
 
-def get_all_referrals_for_rp_from_piwik(piwik_client, rp, date_start_string):
+def get_all_referrals_for_rp_from_piwik(rp, date_start_string):
     segment_by_rp = get_segment_query_string(rp)
     return piwik_client.get_nb_visits_for_rp(date_start_string, segment_by_rp)
 
 
-def get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
+def get_all_signin_attempts_for_rp_from_piwik(rp, date_start_string):
     journey_type = 'SIGN_IN'
-    return get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp, journey_type)
+    return get_all_visits_for_rp_and_journey_type_from_piwik(date_start_string, rp, journey_type)
 
 
-def get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
+def get_all_signup_attempts_for_rp_from_piwik(rp, date_start_string):
     journey_type = 'REGISTRATION'
-    return get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp, journey_type)
+    return get_all_visits_for_rp_and_journey_type_from_piwik(date_start_string, rp, journey_type)
 
 
-def get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string):
+def get_all_single_idp_attempts_for_rp_from_piwik(rp, date_start_string):
     journey_type = 'SINGLE_IDP'
-    return get_all_visits_for_rp_and_journey_type_from_piwik(piwik_client, date_start_string, rp, journey_type)
+    return get_all_visits_for_rp_and_journey_type_from_piwik(date_start_string, rp, journey_type)
 
 
-def get_visits_will_not_work_from_piwik(piwik_client, rp, date_start_string):
+def get_visits_will_not_work_from_piwik(rp, date_start_string):
     will_not_work_page = "@GOV.UK Verify will not work for you - GOV.UK Verify - GOV.UK - LEVEL_2"
     journey_type = 'REGISTRATION'
     will_not_work_segment = get_segment_query_string(rp, journey_type, will_not_work_page)
@@ -73,18 +59,12 @@ def get_visits_will_not_work_from_piwik(piwik_client, rp, date_start_string):
     return piwik_client.get_nb_visits_for_page(date_start_string, will_not_work_segment)
 
 
-def get_visits_might_not_work_from_piwik(piwik_client, rp, date_start_string):
+def get_visits_might_not_work_from_piwik(rp, date_start_string):
     might_not_work_page = "@Why might this not work for me - GOV.UK Verify - GOV.UK - LEVEL_2"
     journey_type = 'REGISTRATION'
     might_not_work_segment = get_segment_query_string(rp, journey_type, might_not_work_page)
 
     return piwik_client.get_nb_visits_for_page(date_start_string, might_not_work_segment)
-
-
-def setup_piwik_client():
-    token = get_piwik_token(ENV)
-    piwik_client = PiwikClient(token, PIWIK_BASE_URL)
-    return piwik_client
 
 
 def is_loa2(rp):
@@ -104,7 +84,7 @@ def load_args_from_command_line():
 def load_verifications_by_rp_csv_for_date(date_start):
     date_end = date.fromisoformat(date_start) + timedelta(days=6)
     verifications_by_rp_csv_path = \
-        f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
+        f'{config.VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
 
     df_verifications_by_rp = pandas.read_csv(verifications_by_rp_csv_path)
     return df_verifications_by_rp
@@ -115,15 +95,13 @@ def run():
     date_start = params.report_start_date
     report_output_path = params.report_output_path
 
-    piwik_client = setup_piwik_client()
-
     # Load verifications by rp csv file
     df_verifications_by_rp = load_verifications_by_rp_csv_for_date(date_start)
 
     # ## Getting the volume of sessions for sign up and sign in
     # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
     # rp_mapping translates the referrer url reported in the verifications csv
-    with open(f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/configuration/rp_mapping.json') as ft:
+    with open(f'{config.VERIFY_DATA_PIPELINE_CONFIG_PATH}/configuration/rp_mapping.json') as ft:
         rp_mapping = json.load(ft)
 
     def get_rp_name(rp_entity_id):
@@ -145,13 +123,13 @@ def run():
     for rp in ls_rp:
         print("Getting data for {}".format(rp))
 
-        all_referrals = get_all_referrals_for_rp_from_piwik(piwik_client, rp, date_start)
+        all_referrals = get_all_referrals_for_rp_from_piwik(rp, date_start)
 
-        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start)
+        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(rp, date_start)
 
-        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start)
+        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(rp, date_start)
 
-        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start)
+        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(rp, date_start)
 
         # TODO if the RP is not found (e.g. due to no successful signins) then we may need to add a row?
         df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
@@ -174,9 +152,9 @@ def run():
     # upvson 'GOV.UK Verify will not work for you' page, segmented by 'registration' custom variable
     for rp in ls_rp:
         if is_loa2(rp):
-            visits_will_not_work = get_visits_will_not_work_from_piwik(piwik_client, rp, date_start)
+            visits_will_not_work = get_visits_will_not_work_from_piwik(rp, date_start)
 
-            visits_might_not_work = get_visits_might_not_work_from_piwik(piwik_client, rp, date_start)
+            visits_might_not_work = get_visits_might_not_work_from_piwik(rp, date_start)
 
             df_all.loc[(df_all['rp'] == rp), 'visits_will_not_work'] = visits_will_not_work
             df_all.loc[(df_all['rp'] == rp), 'visits_might_not_work'] = visits_might_not_work

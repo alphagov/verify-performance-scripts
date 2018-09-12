@@ -2,26 +2,26 @@ import requests
 
 
 class PiwikClient:
-    PIWIK_PERIOD = 'week'
-    PIWIK_LIMIT = '-1'
-
-    def __init__(self, token, piwik_base_url):
+    def __init__(self, config):
         """
         Args:
             token: Piwik access token
             piwik_base_url: URL of Piwik instance to query
+            :param config:
         """
-        self.token = token
-        self.piwik_base_url = piwik_base_url
+        self.token = config.PIWIK_AUTH_TOKEN
+        self.piwik_base_url = config.PIWIK_BASE_URL
+        self.limit = config.PIWIK_LIMIT
+        self.period = config.PIWIK_PERIOD
 
     def get_nb_visits_for_rp(self, date, segment):
         qs = {
             'module': 'API',
             'idSite': '1',
             'format': 'JSON',
-            'filter_limit': self.PIWIK_LIMIT,
+            'filter_limit': self.limit,
             'date': date,
-            'period': self.PIWIK_PERIOD,
+            'period': self.period,
             'method': 'VisitsSummary.getVisits',
             'expanded': '1',
             'token_auth': self.token,
@@ -38,9 +38,9 @@ class PiwikClient:
             'module': 'API',
             'idSite': '1',
             'format': 'JSON',
-            'filter_limit': self.PIWIK_LIMIT,
+            'filter_limit': self.limit,
             'date': date,
-            'period': self.PIWIK_PERIOD,
+            'period': self.period,
             'method': 'Actions.getPageTitles',
             'token_auth': self.token,
             'segment': segment,
