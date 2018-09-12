@@ -8,10 +8,9 @@ piwik configuration in piwik.json
 import argparse
 
 import pandas
-import json
 import os
 from datetime import date, timedelta
-from . import piwik_client, config
+from performance import piwik_client, config, rp_mapping
 
 # TODO this should come from config
 LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
@@ -95,20 +94,14 @@ def run():
     date_start = params.report_start_date
     report_output_path = params.report_output_path
 
-    # Load verifications by rp csv file
     df_verifications_by_rp = load_verifications_by_rp_csv_for_date(date_start)
 
     # ## Getting the volume of sessions for sign up and sign in
     # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
-    # rp_mapping translates the referrer url reported in the verifications csv
-    with open(f'{config.VERIFY_DATA_PIPELINE_CONFIG_PATH}/configuration/rp_mapping.json') as ft:
-        rp_mapping = json.load(ft)
-
-    def get_rp_name(rp_entity_id):
-        return rp_mapping[rp_entity_id]
 
     # Get the human readable IDP name and add it to a new column
-    df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: get_rp_name(row['RP Entity Id']), axis=1)
+    df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: rp_mapping[row['RP Entity Id']],
+                                                                axis=1)
     df_verifications_by_rp.head()
     df_verifications_by_rp = df_verifications_by_rp.rename(columns={'Response type': 'response_type'})
     df_totals = df_verifications_by_rp.groupby(['rp', 'response_type']).count().reset_index()
