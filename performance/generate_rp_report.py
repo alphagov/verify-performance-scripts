@@ -7,7 +7,7 @@ piwik configuration in piwik.json
 """
 import argparse
 
-import pandas as pd
+import pandas
 import json
 import os
 from datetime import date, timedelta
@@ -95,20 +95,27 @@ def load_args_from_command_line():
     return args
 
 
+def load_verifications_by_rp_csv_for_date(date_start):
+    date_end = date.fromisoformat(date_start) + timedelta(days=6)
+    verifications_by_rp_csv_path = \
+        f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
+
+    df_verifications_by_rp = pandas.read_csv(verifications_by_rp_csv_path)
+    return df_verifications_by_rp
+
+
 def run():
     params = load_args_from_command_line()
-    date_start = date.fromisoformat(params.report_start_date)
-    date_end = date_start + timedelta(days=6)
-    date_start_string = params.report_start_date
-    verifications_by_rp_csv = \
-        f'{VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
+    date_start = params.report_start_date
     report_output_path = params.report_output_path
 
+    # Piwik setup
     token = get_piwik_token(ENV)
-
     piwik_client = PiwikClient(token, PIWIK_BASE_URL)
 
-    df_verifications_by_rp = pd.read_csv(verifications_by_rp_csv)
+    # Load verifications by rp csv file
+    df_verifications_by_rp = load_verifications_by_rp_csv_for_date(date_start)
+
     # ## Getting the volume of sessions for sign up and sign in
     # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
     # rp_mapping translates the referrer url reported in the verifications csv
@@ -126,7 +133,7 @@ def run():
     df_totals.head()
     df_totals.drop(['Timestamp', 'RP Entity Id'], axis=1, inplace=True)
     df_totals = df_totals.rename(columns={'IDP Entity Id': 'successes'})
-    df_all = pd.pivot_table(df_totals, values='successes', index='rp', columns='response_type')
+    df_all = pandas.pivot_table(df_totals, values='successes', index='rp', columns='response_type')
     df_all.reset_index(inplace=True)
     df_all.columns = ['rp', 'signup_success', 'signin_success']
     # ### Success rate (sign in)
@@ -134,13 +141,13 @@ def run():
     for rp in ls_rp:
         print("Getting data for {}".format(rp))
 
-        all_referrals = get_all_referrals_for_rp_from_piwik(piwik_client, rp, date_start_string)
+        all_referrals = get_all_referrals_for_rp_from_piwik(piwik_client, rp, date_start)
 
-        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
+        signin_attempts = get_all_signin_attempts_for_rp_from_piwik(piwik_client, rp, date_start)
 
-        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
+        signup_attempts = get_all_signup_attempts_for_rp_from_piwik(piwik_client, rp, date_start)
 
-        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start_string)
+        single_idp_attempts = get_all_single_idp_attempts_for_rp_from_piwik(piwik_client, rp, date_start)
 
         # TODO if the RP is not found (e.g. due to no successful signins) then we may need to add a row?
         df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
@@ -163,9 +170,9 @@ def run():
     # upvson 'GOV.UK Verify will not work for you' page, segmented by 'registration' custom variable
     for rp in ls_rp:
         if is_loa2(rp):
-            visits_will_not_work = get_visits_will_not_work_from_piwik(piwik_client, rp, date_start_string)
+            visits_will_not_work = get_visits_will_not_work_from_piwik(piwik_client, rp, date_start)
 
-            visits_might_not_work = get_visits_might_not_work_from_piwik(piwik_client, rp, date_start_string)
+            visits_might_not_work = get_visits_might_not_work_from_piwik(piwik_client, rp, date_start)
 
             df_all.loc[(df_all['rp'] == rp), 'visits_will_not_work'] = visits_will_not_work
             df_all.loc[(df_all['rp'] == rp), 'visits_might_not_work'] = visits_might_not_work
@@ -177,11 +184,11 @@ def run():
     if not os.path.exists(report_output_path):
         os.makedirs(report_output_path)
     # Create export file with all RPs data
-    df_export.to_csv(f'{report_output_path}/rp_report-{date_start_string}.csv')
+    df_export.to_csv(f'{report_output_path}/rp_report-{date_start}.csv')
     # Create export file per RP
     for index, rp_data_row in df_export.iterrows():
         rp_name = rp_data_row['rp']
-        rp_data_row.to_csv(f'{report_output_path}/rp_report-{date_start_string}-{rp_name}.csv')
+        rp_data_row.to_csv(f'{report_output_path}/rp_report-{date_start}-{rp_name}.csv')
 
 
 if __name__ == '__main__':

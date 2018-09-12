@@ -2,6 +2,7 @@ import performance.generate_rp_report as generate_rp_report
 from unittest.mock import patch
 from performance.piwikclient import PiwikClient
 import pytest
+import pandas
 
 
 @pytest.mark.parametrize("function_under_test,journey_type", [
@@ -103,3 +104,14 @@ def test_get_visits_might_not_work_from_piwik(mock_get_nb_visits_for_page):
 
     mock_get_nb_visits_for_page.assert_called_with(date_start, expected_segment_string)
     assert visits_might_not_work == nb_visits_for_page
+
+
+@patch.object(pandas, 'read_csv')
+def test_load_verifications_by_rp_csv_for_date(mock_pandas_read_csv):
+    date_start = '2018-07-02'
+    expected_verification_csv_filepath_to_load = \
+        '../../verify-data-pipeline-config/data/verifications/verifications_by_rp_2018-07-02_2018-07-08.csv'
+
+    generate_rp_report.load_verifications_by_rp_csv_for_date(date_start)
+
+    mock_pandas_read_csv.assert_called_with(expected_verification_csv_filepath_to_load)
