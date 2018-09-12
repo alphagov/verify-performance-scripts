@@ -1,4 +1,7 @@
 from unittest.mock import patch, Mock
+
+from pytest import fixture
+
 from performance.piwikclient import PiwikClient
 
 
@@ -23,21 +26,29 @@ def sample_get_page_titles_response(nb_visits_value):
     ]
 
 
+@fixture
+def test_setup_variables(**update):
+    res = {
+        "date": "test-date",
+        "segment": "test-segment",
+        "piwik_auth_token": "test-piwik-token",
+        "piwik_base_url": "piwik-url",
+        "piwik_filter_limit": "-1",
+        "piwik_period": "week"
+    }
+    res.update(**update)
+    return res
+
+
 @patch('requests.get')
-def test_get_nb_visits_for_rp(mock_requests_get):
+def test_get_nb_visits_for_rp(mock_requests_get, test_setup_variables):
     mock_requests_get.return_value.json.return_value = {"value": 5}
-    date = "test-date"
-    piwik_token = "test-piwik-token"
-    piwik_period = 'week'
-    piwik_filter_limit = '-1'
-    piwik_base_url = 'url'
-    segment = "test-segment"
 
     mock_config = Mock()
-    mock_config.PIWIK_PERIOD = piwik_period
-    mock_config.PIWIK_LIMIT = piwik_filter_limit
-    mock_config.PIWIK_BASE_URL = piwik_base_url
-    mock_config.PIWIK_AUTH_TOKEN = piwik_token
+    mock_config.PIWIK_PERIOD = test_setup_variables['piwik_period']
+    mock_config.PIWIK_LIMIT = test_setup_variables['piwik_filter_limit']
+    mock_config.PIWIK_BASE_URL = test_setup_variables['piwik_base_url']
+    mock_config.PIWIK_AUTH_TOKEN = test_setup_variables['piwik_auth_token']
 
     piwik_client = PiwikClient(mock_config)
 
@@ -45,38 +56,31 @@ def test_get_nb_visits_for_rp(mock_requests_get):
         'module': 'API',
         'idSite': '1',
         'format': 'JSON',
-        'filter_limit': piwik_filter_limit,
-        'date': date,
-        'period': piwik_period,
+        'filter_limit': test_setup_variables['piwik_filter_limit'],
+        'date': test_setup_variables['date'],
+        'period': test_setup_variables['piwik_period'],
         'method': 'VisitsSummary.getVisits',
         'expanded': '1',
-        'token_auth': piwik_token,
-        'segment': segment
+        'token_auth': test_setup_variables['piwik_auth_token'],
+        'segment': test_setup_variables['segment']
     }
 
-    visits_for_rp = piwik_client.get_nb_visits_for_rp(date, segment)
+    visits_for_rp = piwik_client.get_nb_visits_for_rp(test_setup_variables['date'], test_setup_variables['segment'])
 
     assert visits_for_rp == 5
-    mock_requests_get.assert_called_with(piwik_base_url, expected_piwik_query_string)
+    mock_requests_get.assert_called_with(test_setup_variables['piwik_base_url'], expected_piwik_query_string)
 
 
 @patch('requests.get')
-def test_get_nb_visits_for_page(mock_requests_get):
+def test_get_nb_visits_for_page(mock_requests_get, test_setup_variables):
     nb_visits_value = 8
     mock_requests_get.return_value.json.return_value = sample_get_page_titles_response(nb_visits_value)
 
-    date = "test-date"
-    piwik_token = "test-piwik-token"
-    piwik_period = 'week'
-    piwik_filter_limit = '-1'
-    piwik_base_url = 'url'
-    segment = "test-segment"
-
     mock_config = Mock()
-    mock_config.PIWIK_PERIOD = piwik_period
-    mock_config.PIWIK_LIMIT = piwik_filter_limit
-    mock_config.PIWIK_BASE_URL = piwik_base_url
-    mock_config.PIWIK_AUTH_TOKEN = piwik_token
+    mock_config.PIWIK_PERIOD = test_setup_variables['piwik_period']
+    mock_config.PIWIK_LIMIT = test_setup_variables['piwik_filter_limit']
+    mock_config.PIWIK_BASE_URL = test_setup_variables['piwik_base_url']
+    mock_config.PIWIK_AUTH_TOKEN = test_setup_variables['piwik_auth_token']
 
     piwik_client = PiwikClient(mock_config)
 
@@ -84,15 +88,15 @@ def test_get_nb_visits_for_page(mock_requests_get):
         'module': 'API',
         'idSite': '1',
         'format': 'JSON',
-        'filter_limit': piwik_filter_limit,
-        'date': date,
-        'period': piwik_period,
+        'filter_limit': test_setup_variables['piwik_filter_limit'],
+        'date': test_setup_variables['date'],
+        'period': test_setup_variables['piwik_period'],
         'method': 'Actions.getPageTitles',
-        'token_auth': piwik_token,
-        'segment': segment
+        'token_auth': test_setup_variables['piwik_auth_token'],
+        'segment': test_setup_variables['segment']
     }
 
-    visits_for_page = piwik_client.get_nb_visits_for_page(date, segment)
+    visits_for_page = piwik_client.get_nb_visits_for_page(test_setup_variables['date'], test_setup_variables['segment'])
 
     assert visits_for_page == nb_visits_value
-    mock_requests_get.assert_called_with(piwik_base_url, expected_piwik_query_string)
+    mock_requests_get.assert_called_with(test_setup_variables['piwik_base_url'], expected_piwik_query_string)
