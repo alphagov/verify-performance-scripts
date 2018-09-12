@@ -81,6 +81,12 @@ def get_visits_might_not_work_from_piwik(piwik_client, rp, date_start_string):
     return piwik_client.get_nb_visits_for_page(date_start_string, might_not_work_segment)
 
 
+def setup_piwik_client():
+    token = get_piwik_token(ENV)
+    piwik_client = PiwikClient(token, PIWIK_BASE_URL)
+    return piwik_client
+
+
 def is_loa2(rp):
     return rp not in LOA1_RP_LIST
 
@@ -109,9 +115,7 @@ def run():
     date_start = params.report_start_date
     report_output_path = params.report_output_path
 
-    # Piwik setup
-    token = get_piwik_token(ENV)
-    piwik_client = PiwikClient(token, PIWIK_BASE_URL)
+    piwik_client = setup_piwik_client()
 
     # Load verifications by rp csv file
     df_verifications_by_rp = load_verifications_by_rp_csv_for_date(date_start)
