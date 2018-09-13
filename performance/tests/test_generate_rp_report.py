@@ -1,7 +1,11 @@
 import os
 
+import pandas
+
 from performance import generate_rp_report
-from unittest.mock import patch
+from unittest.mock import patch, call
+
+from performance.generate_rp_report import export_metrics_to_csv
 from performance.piwikclient import PiwikClient
 import pytest
 
@@ -114,3 +118,28 @@ def test_load_verifications_by_rp_csv_for_date(mock_config, mock_pandas_read_csv
     generate_rp_report.load_verifications_by_rp_csv_for_date(date_start)
 
     mock_pandas_read_csv.assert_called_with(expected_verification_csv_filepath_to_load)
+
+
+def get_test_metrics_dataframe(**kwargs):
+    return pandas.DataFrame.from_dict(
+        {
+            "row_1": ["rp1", 0],
+            "row_2": ["rp2", 1],
+        },
+        orient="index", columns=["rp", "success"])
+
+
+@patch("os.path.exists", return_value=True)
+@patch.object(pandas.DataFrame, "to_csv")
+@patch.object(pandas.Series, "to_csv")
+def test_export_metrics_to_csv(mock_series_to_csv, mock_dataframe_to_csv, _):
+    df_export = get_test_metrics_dataframe()
+    report_output_path = "output-path"
+    date_start = "2001-01-01"
+    export_metrics_to_csv(df_export, report_output_path, date_start)
+    mock_dataframe_to_csv.assert_called_with(os.path.join(report_output_path, f'rp_report-{date_start}.csv'))
+    assert mock_series_to_csv.mock_calls == [
+        call(os.path.join(report_output_path, f'rp_report-{date_start}-rp1.csv')),
+        call(os.path.join(report_output_path, f'rp_report-{date_start}-rp2.csv'))
+
+    ]

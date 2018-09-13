@@ -10,6 +10,7 @@ import argparse
 import pandas
 import os
 from datetime import date, timedelta
+
 from performance import piwik_client, config, rp_mapping
 
 # TODO this should come from config
@@ -74,7 +75,8 @@ def load_args_from_command_line():
     parser = argparse.ArgumentParser(description=__doc__)
 
     parser.add_argument('--report_start_date', help='expected format: YYYY-MM-DD', required=True)
-    parser.add_argument('--report_output_path', help='relative path to output report CSV', default='../output')
+    parser.add_argument('--report_output_path', help='relative path to output report CSV',
+                        default=('%s' % config.DEFAULT_OUTPUT_PATH))
 
     args = parser.parse_args()
     return args
@@ -89,8 +91,18 @@ def load_verifications_by_rp_csv_for_date(date_start):
     return df_verifications_by_rp
 
 
-def run():
-    params = load_args_from_command_line()
+def export_metrics_to_csv(df_export, report_output_path, date_start):
+    if not os.path.exists(report_output_path):
+        os.makedirs(report_output_path)
+    # Create export file with all RPs data
+    df_export.to_csv(os.path.join(report_output_path, f'rp_report-{date_start}.csv'))
+    # Create export file per RP
+    for index, rp_data_row in df_export.iterrows():
+        rp_name = rp_data_row['rp']
+        rp_data_row.to_csv(os.path.join(report_output_path, f'rp_report-{date_start}-{rp_name}.csv'))
+
+
+def run(params):
     date_start = params.report_start_date
     report_output_path = params.report_output_path
 
@@ -156,15 +168,9 @@ def run():
     df_export = df_all[
         ['rp', 'all_referrals_with_intent', 'success', 'success_fraction_signup', 'success_fraction_signin',
          'visits_will_not_work', 'visits_might_not_work']]
-    if not os.path.exists(report_output_path):
-        os.makedirs(report_output_path)
-    # Create export file with all RPs data
-    df_export.to_csv(f'{report_output_path}/rp_report-{date_start}.csv')
-    # Create export file per RP
-    for index, rp_data_row in df_export.iterrows():
-        rp_name = rp_data_row['rp']
-        rp_data_row.to_csv(f'{report_output_path}/rp_report-{date_start}-{rp_name}.csv')
+    export_metrics_to_csv(df_export, report_output_path, date_start)
 
 
 if __name__ == '__main__':
-    run()
+    params = load_args_from_command_line()
+    run(params)

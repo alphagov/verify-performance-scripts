@@ -7,7 +7,6 @@ import os
 
 
 class Config:
-
     ENV = 'prod'
 
     VERIFY_DATA_PIPELINE_CONFIG_PATH = os.path.abspath(
@@ -15,6 +14,8 @@ class Config:
     PIWIK_PERIOD = 'week'
     PIWIK_LIMIT = '-1'
     PIWIK_BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
+    DEFAULT_OUTPUT_PATH = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), 'output'))
 
     def __init__(self):
         # TODO: grab these from ENV variables
