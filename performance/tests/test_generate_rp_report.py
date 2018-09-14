@@ -1,13 +1,14 @@
+import numpy
 import os
-
-import pandas
-
-from performance import generate_rp_report
 from unittest.mock import patch, call
 
-from performance.generate_rp_report import export_metrics_to_csv
-from performance.piwikclient import PiwikClient
+import pandas
 import pytest
+
+from pandas.util.testing import assert_frame_equal
+from performance import generate_rp_report
+from performance.generate_rp_report import export_metrics_to_csv, get_rps_with_successes, get_successes_by_rp
+from performance.piwikclient import PiwikClient
 
 
 @pytest.mark.parametrize("function_under_test,journey_type", [
@@ -109,13 +110,13 @@ def test_get_visits_might_not_work_from_piwik(mock_get_nb_visits_for_page):
 
 @patch('pandas.read_csv')
 @patch('performance.generate_rp_report.config', VERIFY_DATA_PIPELINE_CONFIG_PATH='my_path')
-def test_load_verifications_by_rp_csv_for_date(mock_config, mock_pandas_read_csv):
+def test_extract_verifications_by_rp_csv_for_date(mock_config, mock_pandas_read_csv):
     date_start = '2018-07-02'
     expected_verification_csv_filepath_to_load = os.path.join(
         'my_path',
         'data/verifications/verifications_by_rp_2018-07-02_2018-07-08.csv')
 
-    generate_rp_report.load_verifications_by_rp_csv_for_date(date_start)
+    generate_rp_report.extract_verifications_by_rp_csv_for_date(date_start)
 
     mock_pandas_read_csv.assert_called_with(expected_verification_csv_filepath_to_load)
 
@@ -123,10 +124,58 @@ def test_load_verifications_by_rp_csv_for_date(mock_config, mock_pandas_read_csv
 def get_test_metrics_dataframe(**kwargs):
     return pandas.DataFrame.from_dict(
         {
-            "row_1": ["rp1", 0],
-            "row_2": ["rp2", 1],
+            0: ["rp1", 0],
+            1: ["rp2", 1],
         },
         orient="index", columns=["rp", "success"])
+
+
+def get_sample_verifications_by_rp_with_rp_name_dataframe():
+    return pandas.DataFrame.from_dict(
+        {
+            0: ["https://rp-entity-id-1.test.id", "2018-07-23T01:22:03.478Z",
+                "RETURNING", "https://sample-idp-1/sso", "RP 1"],
+            1: ["https://rp-entity-id-2.test.id", "2018-07-23T04:56:19.156Z",
+                "NEW", "https://sample-idp-2/sso", "RP 2"]
+        },
+        orient="index", columns=["RP Entity Id", "Timestamp", "Response type", "IDP Entity Id", "rp"])
+
+
+def test_get_rps_with_successes():
+    """
+    Given verifications_by_rp report for week starting on YYYY-MM-DD
+    And a user successfully signs in to RP 1
+    And a user successfully registers to RP 2
+    Expect ["RP 1", "RP2"]
+    """
+    verifications_by_rp_df = get_sample_verifications_by_rp_with_rp_name_dataframe()
+
+    expected_rp_list = ["RP 1", "RP 2"]
+    actual_rp_list = get_rps_with_successes(verifications_by_rp_df)
+    assert expected_rp_list == actual_rp_list
+
+
+def test_get_successes_by_rp():
+    """
+    Given a verifications_by_rp report for week starting on YYYY-MM-DD
+    And a user successfully signs in to RP 1
+    And a user successfully registers to RP 2
+    Expect a DataFrame
+     | 'rp'   | 'signup_success' | 'signin_success' |
+     | 'RP 1' | 0                | 1                |
+     | 'RP 2' | 1                | 0                |
+    """
+    verifications_by_rp_df = get_sample_verifications_by_rp_with_rp_name_dataframe()
+
+    # TODO: Fix code to return int64 instead of float64
+    # TODO: Fix code to return 0 instead of nan when no successes
+    expected_successes_df = pandas.DataFrame.from_dict({
+        0: ["RP 1", numpy.nan, 1.0],
+        1: ["RP 2", 1.0, numpy.nan]
+    },
+        orient="index", columns=["rp", "signup_success", "signin_success"])
+    actual_successes_df = get_successes_by_rp(verifications_by_rp_df)
+    assert_frame_equal(expected_successes_df, actual_successes_df)
 
 
 @patch("os.path.exists", return_value=True)
@@ -136,7 +185,9 @@ def test_export_metrics_to_csv(mock_series_to_csv, mock_dataframe_to_csv, _):
     df_export = get_test_metrics_dataframe()
     report_output_path = "output-path"
     date_start = "2001-01-01"
+
     export_metrics_to_csv(df_export, report_output_path, date_start)
+
     mock_dataframe_to_csv.assert_called_with(os.path.join(report_output_path, f'rp_report-{date_start}.csv'))
     assert mock_series_to_csv.mock_calls == [
         call(os.path.join(report_output_path, f'rp_report-{date_start}-rp1.csv')),

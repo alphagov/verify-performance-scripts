@@ -82,13 +82,34 @@ def load_args_from_command_line():
     return args
 
 
-def load_verifications_by_rp_csv_for_date(date_start):
+def extract_verifications_by_rp_csv_for_date(date_start):
     date_end = date.fromisoformat(date_start) + timedelta(days=6)
     verifications_by_rp_csv_path = \
         f'{config.VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
 
     df_verifications_by_rp = pandas.read_csv(verifications_by_rp_csv_path)
     return df_verifications_by_rp
+
+
+def get_rps_with_successes(df_verifications_by_rp):
+    """
+    Get list of RPs that have successes under billing
+    :param df_verifications_by_rp: Dataframe for verifications_by_rp CSV report
+    :return: a list of rp entity ids
+    """
+    return df_verifications_by_rp.rp.unique().tolist()
+
+
+def get_successes_by_rp(df_verifications_by_rp):
+    df_verifications_by_rp = df_verifications_by_rp.rename(columns={'Response type': 'response_type'})
+    df_totals = df_verifications_by_rp.groupby(['rp', 'response_type']).count().reset_index()
+    df_totals.drop(['Timestamp', 'RP Entity Id'], axis=1, inplace=True)
+    df_totals = df_totals.rename(columns={'IDP Entity Id': 'successes'})
+    df_successes_by_rp = pandas.pivot_table(df_totals, values='successes', index='rp', columns='response_type')
+    df_successes_by_rp.reset_index(inplace=True)
+    df_successes_by_rp.columns = ['rp', 'signup_success', 'signin_success']
+
+    return df_successes_by_rp
 
 
 def export_metrics_to_csv(df_export, report_output_path, date_start):
@@ -106,26 +127,21 @@ def run(params):
     date_start = params.report_start_date
     report_output_path = params.report_output_path
 
-    df_verifications_by_rp = load_verifications_by_rp_csv_for_date(date_start)
-
-    # ## Getting the volume of sessions for sign up and sign in
-    # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
-
+    # load billing csv file
+    df_verifications_by_rp = extract_verifications_by_rp_csv_for_date(date_start)
     # Get the human readable IDP name and add it to a new column
     df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: rp_mapping[row['RP Entity Id']],
                                                                 axis=1)
-    df_verifications_by_rp.head()
-    df_verifications_by_rp = df_verifications_by_rp.rename(columns={'Response type': 'response_type'})
-    df_totals = df_verifications_by_rp.groupby(['rp', 'response_type']).count().reset_index()
-    df_totals.head()
-    df_totals.drop(['Timestamp', 'RP Entity Id'], axis=1, inplace=True)
-    df_totals = df_totals.rename(columns={'IDP Entity Id': 'successes'})
-    df_all = pandas.pivot_table(df_totals, values='successes', index='rp', columns='response_type')
-    df_all.reset_index(inplace=True)
-    df_all.columns = ['rp', 'signup_success', 'signin_success']
+    rp_list = get_rps_with_successes(df_verifications_by_rp)
+
+    df_all = get_successes_by_rp(df_verifications_by_rp)
+
+    # ## Getting the volume of sessions for sign up and sign in
+    # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
     # ### Success rate (sign in)
-    ls_rp = list(df_verifications_by_rp.rp.unique())
-    for rp in ls_rp:
+
+    # iterate over rps with Billing results
+    for rp in rp_list:
         print("Getting data for {}".format(rp))
 
         all_referrals = get_all_referrals_for_rp_from_piwik(rp, date_start)
@@ -155,7 +171,9 @@ def run(params):
     df_all['dropout_rate'] = df_all['dropout'] / df_all['all_referrals_with_intent']
     # ### Ineligible (will not work / might not work) - with journey type segment
     # upvson 'GOV.UK Verify will not work for you' page, segmented by 'registration' custom variable
-    for rp in ls_rp:
+
+    # iterate over RPs with billing results
+    for rp in rp_list:
         if is_loa2(rp):
             visits_will_not_work = get_visits_will_not_work_from_piwik(rp, date_start)
 
