@@ -3,6 +3,7 @@
 # with package version changes made in requirements-app.txt
 
 boto3>=1.7.77,<1.8.0
+python-dotenv==0.9.1 # Will remove this for production.
 
 ## The following requirements were added by pip freeze:
 botocore==1.10.84
