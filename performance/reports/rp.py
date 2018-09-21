@@ -37,7 +37,8 @@ def get_successes_by_rp(df_verifications_by_rp):
     df_totals = df_verifications_by_rp.groupby(['rp', 'response_type']).count().reset_index()
     df_totals.drop(['Timestamp', 'RP Entity Id'], axis=1, inplace=True)
     df_totals = df_totals.rename(columns={'IDP Entity Id': 'successes'})
-    df_successes_by_rp = pandas.pivot_table(df_totals, values='successes', index='rp', columns='response_type')
+    df_successes_by_rp = pandas.pivot_table(df_totals, values='successes', index='rp', columns='response_type',
+                                            fill_value=0)
     df_successes_by_rp.reset_index(inplace=True)
     df_successes_by_rp.columns = ['rp', 'signup_success', 'signin_success']
 

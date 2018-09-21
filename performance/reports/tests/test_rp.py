@@ -1,7 +1,6 @@
 import os
 from unittest.mock import patch, call
 
-import numpy
 import pandas
 from pandas.util.testing import assert_frame_equal
 
@@ -44,11 +43,9 @@ def test_get_successes_by_rp():
     """
     verifications_by_rp_df = get_sample_verifications_by_rp_dataframe(with_rp_name=True)
 
-    # TODO: Fix code to return int64 instead of float64
-    # TODO: Fix code to return 0 instead of nan when no successes
     expected_successes_df = pandas.DataFrame.from_dict({
-        0: ["RP 1", numpy.nan, 1.0],
-        1: ["RP 2", 1.0, numpy.nan]
+        0: ["RP 1", 0, 1],
+        1: ["RP 2", 1, 0]
     },
         orient="index", columns=["rp", "signup_success", "signin_success"])
     actual_successes_df = get_successes_by_rp(verifications_by_rp_df)
