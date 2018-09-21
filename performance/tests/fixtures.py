@@ -20,3 +20,13 @@ def get_sample_verifications_by_rp_dataframe(with_rp_name=False):
     if with_rp_name:
         verifications_by_rp["rp"] = ["RP 1", "RP 2"]
     return verifications_by_rp
+
+
+def get_sample_successes_by_rp_dataframe():
+    successes_by_rp = pandas.DataFrame.from_dict(
+        {
+            0: ["RP 1", 200, 100],
+            1: ["RP 2", 500, 300],
+        },
+        orient="index", columns=["rp", "signup_success", "signin_success"])
+    return successes_by_rp
