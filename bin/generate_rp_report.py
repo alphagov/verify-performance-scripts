@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Generate RP reports from Piwik and Successful verifications data
 
@@ -5,6 +7,8 @@ expects: the following files to be present in verify-data-pipeline-config:
 verifications_by_rp_<for-required-week>.csv
 piwik configuration in piwik.json
 """
+
+import bootstrap  # noqa
 import argparse
 
 from performance import config
