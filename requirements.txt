@@ -3,11 +3,14 @@
 # with package version changes made in requirements-app.txt
 
 boto3>=1.7.77,<1.8.0
+pandas>=0.23.4,<0.24
 
 ## The following requirements were added by pip freeze:
 botocore==1.10.84
 docutils==0.14
 jmespath==0.9.3
+numpy==1.15.1
 python-dateutil==2.7.3
+pytz==2018.5
 s3transfer==0.1.13
 six==1.11.0
