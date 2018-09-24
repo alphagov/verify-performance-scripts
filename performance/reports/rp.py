@@ -4,6 +4,7 @@ import pandas
 
 import performance.piwik as piwik
 import performance.billing as billing
+from performance.rp_federation_config import rp_mapping
 
 RP_REPORT_COLUMNS = [
     'rp',
@@ -23,7 +24,7 @@ def is_loa2(rp):
     return rp not in LOA1_RP_LIST
 
 
-def get_rps_with_successes(df_verifications_by_rp):
+def get_rp_names_from_df(df_verifications_by_rp):
     """
     Get list of RPs that have successes under billing
     :param df_verifications_by_rp: Dataframe for verifications_by_rp CSV report
@@ -32,7 +33,7 @@ def get_rps_with_successes(df_verifications_by_rp):
     return df_verifications_by_rp.rp.unique().tolist()
 
 
-def get_successes_by_rp(df_verifications_by_rp):
+def get_df_successes_by_rp(df_verifications_by_rp):
     df_verifications_by_rp = df_verifications_by_rp.rename(columns={'Response type': 'response_type'})
     df_totals = df_verifications_by_rp.groupby(['rp', 'response_type']).count().reset_index()
     df_totals.drop(['Timestamp', 'RP Entity Id'], axis=1, inplace=True)
@@ -91,15 +92,27 @@ def transform_metrics(df):
 
 
 def add_piwik_data(date_start, df_verifications_by_rp):
-    df_successes_rp = get_successes_by_rp(df_verifications_by_rp)
-    rps_with_successes = get_rps_with_successes(df_verifications_by_rp)
+    df_successes_rp = get_df_successes_by_rp(df_verifications_by_rp)
+    df_all_rp = get_df_for_all_rps(df_successes_rp)
+    # rps_with_successes = get_rps_with_successes(df_verifications_by_rp)
     # ## Getting the volume of sessions for sign up and sign in
     # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
     # ### Success rate (sign in)
     # iterate over rps with Billing results
-    for rp in rps_with_successes:
-        add_piwik_data_for_rp(date_start, df_successes_rp, rp)
-    return df_successes_rp
+    for rp in get_rp_names_from_df(df_all_rp):
+        add_piwik_data_for_rp(date_start, df_all_rp, rp)
+    return df_all_rp
+
+
+def get_df_for_all_rps(df_successes_rp):
+    all_rp_names = set(rp_mapping.values())
+    rp_names_with_successes = set(get_rp_names_from_df(df_successes_rp))
+    rp_names_missing = sorted(list(all_rp_names.difference(rp_names_with_successes)))
+    df_missing_rp = pandas.DataFrame.from_dict({k: [v, 0, 0] for k, v in enumerate(rp_names_missing)},
+                                               orient="index",
+                                               columns=["rp", "signup_success", "signin_success"])
+    df_all_rp = df_successes_rp.append(df_missing_rp, ignore_index=True)
+    return df_all_rp
 
 
 def add_piwik_data_for_rp(date_start, df_successes_rp, rp):

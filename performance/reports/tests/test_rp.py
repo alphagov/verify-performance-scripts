@@ -5,8 +5,8 @@ import pandas
 from pandas.util.testing import assert_frame_equal
 from performance import piwik
 
-from performance.reports.rp import get_rps_with_successes, get_successes_by_rp, export_metrics_to_csv, \
-    add_piwik_data_for_rp, transform_metrics
+from performance.reports.rp import get_rp_names_from_df, get_df_successes_by_rp, export_metrics_to_csv, \
+    add_piwik_data_for_rp, transform_metrics, get_df_for_all_rps
 from performance.tests.fixtures import get_sample_verifications_by_rp_dataframe, get_sample_successes_by_rp_dataframe
 
 
@@ -29,7 +29,7 @@ def test_get_rps_with_successes():
     verifications_by_rp_df = get_sample_verifications_by_rp_dataframe(with_rp_name=True)
 
     expected_rp_list = ["RP 1", "RP 2"]
-    actual_rp_list = get_rps_with_successes(verifications_by_rp_df)
+    actual_rp_list = get_rp_names_from_df(verifications_by_rp_df)
     assert expected_rp_list == actual_rp_list
 
 
@@ -50,7 +50,7 @@ def test_get_successes_by_rp():
         1: ["RP 2", 1, 0]
     },
         orient="index", columns=["rp", "signup_success", "signin_success"])
-    actual_successes_df = get_successes_by_rp(verifications_by_rp_df)
+    actual_successes_df = get_df_successes_by_rp(verifications_by_rp_df)
     assert_frame_equal(expected_successes_df, actual_successes_df)
 
 
@@ -123,3 +123,23 @@ def test_add_piwik_data_for_rp(mock_get_all_signin_attempts_for_rp, mock_get_all
     actual_df = df_successes_rp.loc[df_successes_rp['rp'] == rp]
 
     assert_frame_equal(expected_df, actual_df)
+
+
+@patch('performance.reports.rp.rp_mapping', {
+    "https://missing-rp-1.local": "Missing RP 1",
+    "https://missing-rp-2.local": "Missing RP 2",
+    "https://rp-1.local": "RP 1",
+})
+def test_get_df_for_all_rps_adds_missing_rps():
+    df_success_rp = get_sample_successes_by_rp_dataframe()
+    missing_expected_df = pandas.DataFrame.from_dict(
+        {
+            0: ["Missing RP 1", 0, 0],
+            1: ["Missing RP 2", 0, 0],
+        },
+        orient="index", columns=["rp", "signup_success", "signin_success"])
+    expected_df = df_success_rp.append(missing_expected_df, ignore_index=True)
+
+    actual_df_with_all_rps = get_df_for_all_rps(df_success_rp)
+
+    assert_frame_equal(actual_df_with_all_rps, expected_df)
