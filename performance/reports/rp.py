@@ -25,11 +25,6 @@ def is_loa2(rp):
 
 
 def get_rp_names_from_df(df_verifications_by_rp):
-    """
-    Get list of RPs that have successes under billing
-    :param df_verifications_by_rp: Dataframe for verifications_by_rp CSV report
-    :return: a list of rp entity ids
-    """
     return df_verifications_by_rp.rp.unique().tolist()
 
 
@@ -74,31 +69,23 @@ def generate_weekly_report_df(date_start, df_verifications_by_rp):
 
 
 def transform_metrics(df):
-    # df['signin_rate (deprecated)'] = df['signin_success'] / df['signin_attempt']
-    # df['signup_rate (deprecated)'] = df['signup_success'] / df['signup_attempt']
-    df['all_referrals_with_intent'] = df['signin_attempt'] + df['signup_attempt'] + df[
-        'single_idp_attempt']
+    df['all_referrals_with_intent'] = df['signin_attempt'] + df['signup_attempt'] + df['single_idp_attempt']
     df['success'] = df['signin_success'] + df['signup_success']
     df['success_fraction_signup'] = df['signup_success'] / df['success']
     df['success_fraction_signin'] = df['signin_success'] / df['success']
+    # Note: The below metrics are no longer used, and so have been disabled.
+    # df['signin_rate (deprecated)'] = df['signin_success'] / df['signin_attempt']
+    # df['signup_rate (deprecated)'] = df['signup_success'] / df['signup_attempt']
     # df['success_rate'] = df['success'] / df['all_referrals_with_intent']
     # df['success_signup_rate'] = df['signup_success'] / df['all_referrals_with_intent']
     # df['success_signin_rate'] = df['signin_success'] / df['all_referrals_with_intent']
     # df['dropout'] = df['all_referrals_with_intent'] - df['signin_success'] - df['signup_success']
     # df['dropout_rate'] = df['dropout'] / df['all_referrals_with_intent']
-    # ### Ineligible (will not work / might not work) - with journey type segment
-    # upvson 'GOV.UK Verify will not work for you' page, segmented by 'registration' custom variable
-    # iterate over RPs with billing results
 
 
 def add_piwik_data(date_start, df_verifications_by_rp):
     df_successes_rp = get_df_successes_by_rp(df_verifications_by_rp)
     df_all_rp = get_df_for_all_rps(df_successes_rp)
-    # rps_with_successes = get_rps_with_successes(df_verifications_by_rp)
-    # ## Getting the volume of sessions for sign up and sign in
-    # No longer uses unique page views - gets the number of sessions for each value of the JOURNEY_TYPE custom variable
-    # ### Success rate (sign in)
-    # iterate over rps with Billing results
     for rp in get_rp_names_from_df(df_all_rp):
         add_piwik_data_for_rp(date_start, df_all_rp, rp)
     return df_all_rp
@@ -117,12 +104,12 @@ def get_df_for_all_rps(df_successes_rp):
 
 def add_piwik_data_for_rp(date_start, df_successes_rp, rp):
     print("Getting data for {}".format(rp))
+    # Note: The below metric is no longer used, and so has been disabled.
     # all_referrals = piwik.get_all_referrals_for_rp(rp, date_start)
+    # df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
     signin_attempts = piwik.get_all_signin_attempts_for_rp(rp, date_start)
     signup_attempts = piwik.get_all_signup_attempts_for_rp(rp, date_start)
     single_idp_attempts = piwik.get_all_single_idp_attempts_for_rp(rp, date_start)
-    # TODO if the RP is not found (e.g. due to no successful signins) then we may need to add a row?
-    # df_all.loc[(df_all['rp'] == rp), 'all_referrals'] = all_referrals
     df_successes_rp.loc[(df_successes_rp['rp'] == rp), 'signin_attempt'] = signin_attempts
     df_successes_rp.loc[(df_successes_rp['rp'] == rp), 'signup_attempt'] = signup_attempts
     df_successes_rp.loc[(df_successes_rp['rp'] == rp), 'single_idp_attempt'] = single_idp_attempts
