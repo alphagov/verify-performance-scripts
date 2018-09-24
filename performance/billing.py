@@ -1,24 +1,9 @@
-import json
-import os
 from datetime import date, timedelta
 
 import pandas
 
 from performance import config
-
-
-class RPFederationConfig(dict):
-    """
-        rp_mapping translates the referrer url reported in the verifications csv
-    """
-    rp_mapping_config_path = 'configuration/rp_mapping.json'
-
-    def __init__(self, config):
-        with open(os.path.join(config.VERIFY_DATA_PIPELINE_CONFIG_PATH, self.rp_mapping_config_path)) as fn:
-            super().__init__(json.load(fn))
-
-
-_rp_mapping = RPFederationConfig(config)
+from performance.rp_federation_config import rp_mapping
 
 
 def extract_verifications_by_rp_csv_for_date(date_start):
@@ -41,5 +26,5 @@ def augment_verifications_by_rp_with_rp_name(df_verifications_by_rp):
     for verifications_by_rp data
     :param df_verifications_by_rp: dataframe created from a verifications_by_rp report
     """
-    df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: _rp_mapping[row['RP Entity Id']],
+    df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: rp_mapping[row['RP Entity Id']],
                                                                 axis=1)
