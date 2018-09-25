@@ -65,11 +65,11 @@ def test_export_metrics_to_csv_writes_to_folder_for_week(mock_series_to_csv, moc
     export_metrics_to_csv(df_export, report_output_path, date_start)
 
     mock_dataframe_to_csv.assert_called_with(
-        os.path.join(report_output_path, date_start, f'rp_report-{date_start}.csv'))
+        os.path.join(report_output_path, date_start, f'{date_start}-_All-RPs-rp_report.csv'))
 
     assert mock_series_to_csv.mock_calls == [
-        call(os.path.join(report_output_path, date_start, f'rp_report-{date_start}-rp1.csv')),
-        call(os.path.join(report_output_path, date_start, f'rp_report-{date_start}-rp2.csv'))
+        call(os.path.join(report_output_path, date_start, f'{date_start}-rp1-rp_report.csv')),
+        call(os.path.join(report_output_path, date_start, f'{date_start}-rp2-rp_report.csv'))
 
     ]
 
