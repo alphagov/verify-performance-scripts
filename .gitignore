@@ -8,6 +8,7 @@ __pycache__
 
 .env
 verify-performance-scripts-env
+verify-performance-scripts-venv
 
 # Intellij Project files
 *.idea

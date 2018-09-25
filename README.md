@@ -57,7 +57,7 @@ make virtualenv
 
 While working, run the following command to switch into the virtual environment
 ```
-source ./venv/bin/activate
+source ./verify-performance-scripts-venv/bin/activate
 ```
 
 To exit the virtual environment:
