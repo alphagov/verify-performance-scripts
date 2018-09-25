@@ -42,14 +42,16 @@ def get_df_successes_by_rp(df_verifications_by_rp):
 
 
 def export_metrics_to_csv(df_export, report_output_path, date_start):
-    if not os.path.exists(report_output_path):
-        os.makedirs(report_output_path)
+    report_output_path_for_week = os.path.join(report_output_path, date_start)
+    if not os.path.exists(report_output_path_for_week):
+        os.makedirs(report_output_path_for_week)
+
     # Create export file with all RPs data
-    df_export.to_csv(os.path.join(report_output_path, f'rp_report-{date_start}.csv'))
+    df_export.to_csv(os.path.join(report_output_path_for_week, f'rp_report-{date_start}.csv'))
     # Create export file per RP
     for index, rp_data_row in df_export.iterrows():
         rp_name = rp_data_row['rp']
-        rp_data_row.to_csv(os.path.join(report_output_path, f'rp_report-{date_start}-{rp_name}.csv'))
+        rp_data_row.to_csv(os.path.join(report_output_path_for_week, f'rp_report-{date_start}-{rp_name}.csv'))
 
 
 def generate_weekly_report_for_date(date_start, report_output_path):
