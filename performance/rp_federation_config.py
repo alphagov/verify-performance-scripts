@@ -4,6 +4,7 @@ import os
 from performance import config
 
 
+# TODO: The `Config` class now has RP mappings - use it instead and remove this.
 class RPFederationConfig(dict):
     """
         rp_mapping translates the referrer url reported in the verifications csv

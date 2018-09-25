@@ -6,7 +6,6 @@ import json
 import os
 import logging  # noqa
 
-
 # logging.basicConfig(level=logging.DEBUG)  #noqa
 
 BASE_DIR = os.path.dirname(__file__)
@@ -28,6 +27,8 @@ class Config:
         self.GSHEETS_CREDENTIALS_FILE = os.path.join(self.VERIFY_DATA_PIPELINE_CONFIG_PATH, 'credentials',
                                                      'google_sheets_credentials.json')
         self.rp_information = {rp['rp_name']: rp for rp in self._load_json_configuration('rp_information')}
+        self.rp_mapping = self._load_json_configuration('rp_mapping')
+        self._validate_rp_information()
 
     def _get_piwik_token(self):
         with open(f'{self.VERIFY_DATA_PIPELINE_CONFIG_PATH}/credentials/piwik_token.json') as fileHandle:
@@ -38,3 +39,8 @@ class Config:
         config_file = os.path.join(self.VERIFY_DATA_PIPELINE_CONFIG_PATH, 'configuration', '{}.json'.format(name))
         with open(config_file) as f:
             return json.load(f)
+
+    def _validate_rp_information(self):
+        diff = set(self.rp_information.keys()).symmetric_difference(self.rp_mapping.values())
+        if diff:
+            raise LookupError('RP information and RP mappings are different:', diff)
