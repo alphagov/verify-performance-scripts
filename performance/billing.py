@@ -1,9 +1,18 @@
-from datetime import date, timedelta
+import argparse
+from datetime import timedelta, datetime
 
 import pandas
 
 from performance import config
 from performance.rp_federation_config import rp_mapping
+
+
+def fromisoformat(date_string):
+    try:
+        return datetime.strptime(date_string, "%Y-%m-%d").date()
+    except ValueError:
+        msg = "Not a valid date: '{0}'.".format(date_string)
+        raise argparse.ArgumentTypeError(msg)
 
 
 def extract_verifications_by_rp_csv_for_date(date_start):
@@ -12,7 +21,7 @@ def extract_verifications_by_rp_csv_for_date(date_start):
     :param date_start: start date for the week
     :return: pandas.Dataframe with non transformed data with matching columns to the original verifications_by_rp
     """
-    date_end = date.fromisoformat(date_start) + timedelta(days=6)
+    date_end = fromisoformat(date_start) + timedelta(days=6)
     verifications_by_rp_csv_path = \
         f'{config.VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
 
