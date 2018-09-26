@@ -16,6 +16,8 @@ RP_REPORT_COLUMNS = [
     'visits_might_not_work'
 ]
 
+RP_REPORT_OUTPUT_FOLDER = "rp_report"
+
 # TODO this should come from config
 LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
 
@@ -42,7 +44,7 @@ def get_df_successes_by_rp(df_verifications_by_rp):
 
 
 def export_metrics_to_csv(df_export, report_output_path, date_start):
-    report_output_path_for_week = os.path.join(report_output_path, date_start)
+    report_output_path_for_week = os.path.join(report_output_path, RP_REPORT_OUTPUT_FOLDER, date_start)
     if not os.path.exists(report_output_path_for_week):
         os.makedirs(report_output_path_for_week)
 
