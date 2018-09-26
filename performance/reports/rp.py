@@ -49,7 +49,7 @@ def export_metrics_to_csv(df_export, report_output_path, date_start):
         os.makedirs(report_output_path_for_week)
 
     # Create export file with all RPs data
-    df_export.to_csv(os.path.join(report_output_path_for_week, f'{date_start}-_All-RPs-rp_report.csv'))
+    df_export.to_csv(os.path.join(report_output_path_for_week, f'{date_start}-_all-rps-rp_report.csv'))
     # Create export file per RP
     for index, rp_data_row in df_export.iterrows():
         rp_name = rp_data_row['rp']
