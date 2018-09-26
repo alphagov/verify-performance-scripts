@@ -8,7 +8,7 @@ RP_MAPPING_STREAM = """
 """
 
 
-@patch('performance.rp_federation_config.config', VERIFY_DATA_PIPELINE_CONFIG_PATH='config-path')
+@patch('performance.rp_federation_config.prod_config', VERIFY_DATA_PIPELINE_CONFIG_PATH='config-path')
 def test_instantiation_loads_rp_mappings(mock_config):
     sample_rp_mapping = json.loads(RP_MAPPING_STREAM)
 

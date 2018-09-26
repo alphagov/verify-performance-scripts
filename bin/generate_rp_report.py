@@ -11,7 +11,7 @@ piwik configuration in piwik.json
 import bootstrap  # noqa
 import argparse
 
-from performance import config
+from performance import prod_config
 from performance.reports.rp import generate_weekly_report_for_date
 
 from performance.reports.rp import test_upload
@@ -22,7 +22,7 @@ def load_args_from_command_line():
 
     parser.add_argument('--report_start_date', help='expected format: YYYY-MM-DD', required=True)
     parser.add_argument('--report_output_path', help='relative path to output report CSV',
-                        default=('%s' % config.DEFAULT_OUTPUT_PATH))
+                        default=('%s' % prod_config.DEFAULT_OUTPUT_PATH))
     parser.add_argument('--test-upload-to-gsheets-key',
                         help='Set a sheet key to test uploading to GSheets only: dummy data will be used.')
     return parser.parse_args()

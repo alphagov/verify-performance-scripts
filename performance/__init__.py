@@ -1,3 +1,3 @@
-from config import Config
+from performance.config import Config
 
-config = Config()
+prod_config = Config()

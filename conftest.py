@@ -1,14 +1,13 @@
 import pytest
 from unittest.mock import MagicMock
 
-import config as default_config
+from performance.config import TestConfig
 
 
 @pytest.fixture
 def config():
     """A fixture for test configuration."""
-    test_config = default_config.Config()
-    return test_config
+    return TestConfig()
 
 
 @pytest.fixture(autouse=True)

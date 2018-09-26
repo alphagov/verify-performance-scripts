@@ -1,6 +1,6 @@
 import requests
 
-from performance import config
+from performance import prod_config
 
 
 class PiwikClient:
@@ -55,7 +55,7 @@ class PiwikClient:
         return nb_visits
 
 
-_piwik_client = PiwikClient(config)
+_piwik_client = PiwikClient(prod_config)
 
 
 def get_segment_query_string(rp_name, journey_type=None, page_title=None):
