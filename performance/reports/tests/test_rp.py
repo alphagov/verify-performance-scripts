@@ -152,9 +152,23 @@ def test_export_metrics_to_google_sheets(config, rp_report_weekly):
     pygsheets_client = MagicMock()
     worksheet_mock = pygsheets_client.open_by_key.return_value.worksheet_by_title.return_value
 
+    start_date = date(2001, 1, 1).isoformat()
+
     exporter = GoogleSheetsRelyingPartyReportExporter(config, pygsheets_client)
-    exporter.export(rp_report_weekly, date(2001, 1, 1).isoformat())
+    exporter.export(rp_report_weekly, start_date)
 
     number_of_rows = rp_report_weekly.shape[0]
     assert pygsheets_client.open_by_key.call_count == number_of_rows
-    assert worksheet_mock.insert_cols.call_count == number_of_rows
+
+    santised_test_data = rp_report_weekly.fillna('')
+    assert worksheet_mock.insert_cols.mock_calls == [
+        call(1, 1, values=[
+            start_date,
+            row.all_referrals_with_intent,
+            row.success,
+            row.success_fraction_signup,
+            row.success_fraction_signin,
+            row.visits_will_not_work,
+            row.visits_might_not_work,
+        ]) for row in santised_test_data.itertuples()
+    ]
