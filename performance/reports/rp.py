@@ -58,7 +58,7 @@ def export_metrics_to_csv(df_export, report_output_path, date_start):
 
 def generate_weekly_report_for_date(date_start, report_output_path):
     # load billing csv file
-    df_verifications_by_rp = billing.extract_verifications_by_rp_csv_for_date(date_start)
+    df_verifications_by_rp = billing.extract_verifications_by_rp_csv_for_week(date_start)
     billing.augment_verifications_by_rp_with_rp_name(df_verifications_by_rp)
     df_all = generate_weekly_report_df(date_start, df_verifications_by_rp)
     # Re-order columns and choose the ones we actually (currently) want in our report

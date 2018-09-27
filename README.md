@@ -22,6 +22,8 @@ Scripts for running the RP report
     brew install pre-commit
     ```
 
+1. An AWS account with credentials configured in `~/.aws/credentials`, with permissions to access the billing pre-prod account
+
 ### Installation
 From the project root directory, run the following in terminal:
 ```
@@ -30,6 +32,15 @@ make requirements-dev
     
 This will create a Python virtual environment (sometimes referred to as Virtualenv or venv) and install all the required dependencies into it.
     
+## Configure environment variables
+Environment variables required to run the reports are set in the file .env. 
+
+Make a copy of the sample file, 
+```
+cp .env.sample .env
+```
+Then open the file `.env` and fill in the values 
+
 ## Using the Python Virtual Environment 
 We are using an isolated Python environment to allow modules, dependencies, etc. used by this project to not affect another. 
 
