@@ -1,13 +1,16 @@
 import os
-from unittest.mock import patch, call
+from unittest.mock import patch, call, MagicMock
 
 import pandas
 from pandas.util.testing import assert_frame_equal
 from performance import piwik
 
-from performance.reports.rp import get_rp_names_from_df, get_df_successes_by_rp, export_metrics_to_csv, \
-    add_piwik_data_for_rp, transform_metrics, get_df_for_all_rps
+from performance.reports.rp import (
+    get_rp_names_from_df, get_df_successes_by_rp, export_metrics_to_csv,
+    add_piwik_data_for_rp, transform_metrics, get_df_for_all_rps, GoogleSheetsRelyingPartyReportExporter,
+)
 from performance.tests.fixtures import get_sample_verifications_by_rp_dataframe, get_sample_successes_by_rp_dataframe
+from datetime import date
 
 
 def get_test_metrics_dataframe(**kwargs):
@@ -145,3 +148,29 @@ def test_get_df_for_all_rps_adds_missing_rps():
     actual_df_with_all_rps = get_df_for_all_rps(df_success_rp)
 
     assert_frame_equal(actual_df_with_all_rps, expected_df)
+
+
+def test_export_metrics_to_google_sheets(config, rp_report_weekly):
+    pygsheets_client = MagicMock()
+    worksheet_mock = pygsheets_client.open_by_key.return_value.worksheet_by_title.return_value
+
+    start_date = date(2001, 1, 1).isoformat()
+
+    exporter = GoogleSheetsRelyingPartyReportExporter(config, pygsheets_client)
+    exporter.export(rp_report_weekly, start_date)
+
+    number_of_rows = rp_report_weekly.shape[0]
+    assert pygsheets_client.open_by_key.call_count == number_of_rows
+
+    santised_test_data = rp_report_weekly.fillna('')
+    assert worksheet_mock.insert_cols.mock_calls == [
+        call(1, 1, values=[
+            start_date,
+            row.all_referrals_with_intent,
+            row.success,
+            row.success_fraction_signup,
+            row.success_fraction_signin,
+            row.visits_will_not_work,
+            row.visits_might_not_work,
+        ]) for row in santised_test_data.itertuples()
+    ]

@@ -5,6 +5,9 @@ def get_sample_rp_mapping():
     return {
         "https://rp-entity-id-1.test.id": "RP 1",
         "https://rp-entity-id-2.test.id": "RP 2",
+        "https://rp-entity-id-3.test.id": "RP 3",
+        "https://rp-entity-id-4.test.id": "RP 4",
+        "https://rp-entity-id-4.other.test.id": "RP 4",
     }
 
 

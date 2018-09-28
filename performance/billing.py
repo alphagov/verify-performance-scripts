@@ -1,9 +1,10 @@
+import os
 import argparse
 from datetime import timedelta, datetime
 
 import pandas
 
-from performance import config
+from performance import prod_config as config
 from performance.rp_federation_config import rp_mapping
 
 
@@ -22,8 +23,10 @@ def extract_verifications_by_rp_csv_for_date(date_start):
     :return: pandas.Dataframe with non transformed data with matching columns to the original verifications_by_rp
     """
     date_end = fromisoformat(date_start) + timedelta(days=6)
-    verifications_by_rp_csv_path = \
-        f'{config.VERIFY_DATA_PIPELINE_CONFIG_PATH}/data/verifications/verifications_by_rp_{date_start}_{date_end}.csv'
+    verifications_by_rp_csv_path = os.path.join(config.VERIFY_DATA_PIPELINE_CONFIG_PATH,
+                                                'data',
+                                                'verifications',
+                                                f'verifications_by_rp_{date_start}_{date_end}.csv')
 
     df_verifications_by_rp = pandas.read_csv(verifications_by_rp_csv_path)
     return df_verifications_by_rp
