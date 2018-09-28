@@ -1,13 +1,12 @@
 # generated RP reports
 output/
 
-venv*
+*venv*
 *.pyc
 __pycache__
 .cache
 
 .env
-verify-performance-scripts-env
 
 # Intellij Project files
 *.idea
