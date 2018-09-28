@@ -68,6 +68,10 @@ def test_upload(gsheets_key, date_start):
     in this case we're actually going to do the upload the Google Sheets, this one is
     runnable independently from the command line.
     """
+    # Get test configuration because we need our rp_information to refer to the same set
+    # of test RP's as are used in the rp_report_weekly fixture. We're using the fixture
+    # because if you want to test the upload process, you don't want to have to wait around
+    # for Piwik - any data will do.
     config = performance.config.TestConfig()
     pygsheets_client = pygsheets.authorize(service_file=config.GSHEETS_CREDENTIALS_FILE)
     for rp_info in config.rp_information.values():
