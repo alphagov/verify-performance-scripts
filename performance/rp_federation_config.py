@@ -1,7 +1,7 @@
 import json
 import os
 
-from performance import config
+from performance import prod_config
 
 
 # TODO: The `Config` class now has RP mappings - use it instead and remove this.
@@ -16,4 +16,4 @@ class RPFederationConfig(dict):
             super().__init__(json.load(fn))
 
 
-rp_mapping = RPFederationConfig(config)
+rp_mapping = RPFederationConfig(prod_config)
