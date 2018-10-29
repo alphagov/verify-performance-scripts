@@ -6,9 +6,7 @@ import json
 import os
 import logging  # noqa
 
-
 from performance.tests.fixtures import get_sample_rp_mapping  # TODO fixture should move in here
-
 
 # logging.basicConfig(level=logging.DEBUG)  #noqa
 
@@ -29,15 +27,10 @@ class Config:
 
     def __init__(self):
         # TODO: grab these from ENV variables
-        self.PIWIK_AUTH_TOKEN = self._get_piwik_token()
+        self.PIWIK_AUTH_TOKEN = os.getenv('PIWIK_API_TOKEN')
         self.rp_information = {rp['rp_name']: rp for rp in self._load_json_configuration('rp_information')}
         self.rp_mapping = self._load_json_configuration('rp_mapping')
         self._validate_rp_information()
-
-    def _get_piwik_token(self):
-        with open(f'{self.VERIFY_DATA_PIPELINE_CONFIG_PATH}/credentials/piwik_token.json') as fileHandle:
-            token = json.load(fileHandle)['production' if self.ENV == 'prod' else 'dr_token']
-            return token
 
     def _load_json_configuration(self, name):
         config_file = os.path.join(self.VERIFY_DATA_PIPELINE_CONFIG_PATH, 'configuration', '{}.json'.format(name))
