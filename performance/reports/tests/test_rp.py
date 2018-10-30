@@ -130,7 +130,7 @@ def test_add_piwik_data_for_rp(mock_get_all_signin_attempts_for_rp, mock_get_all
     assert_frame_equal(expected_df, actual_df)
 
 
-@patch('performance.reports.rp.rp_mapping', {
+@patch('performance.reports.rp.config.rp_mapping', {
     "https://missing-rp-1.local": "Missing RP 1",
     "https://missing-rp-2.local": "Missing RP 2",
     "https://rp-1.local": "RP 1",

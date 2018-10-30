@@ -50,4 +50,4 @@ test-flake8: virtualenv
 # Run unit tests.
 .PHONY: test-unit
 test-unit: virtualenv
-	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
+	ENV=test ${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}

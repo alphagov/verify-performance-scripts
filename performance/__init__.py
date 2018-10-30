@@ -1,3 +1,7 @@
-from performance.config import Config
+import os
+from performance.config import Config, TestConfig
 
-prod_config = Config()
+if os.getenv('ENV') == 'test':
+    prod_config = TestConfig()
+else:
+    prod_config = Config()
