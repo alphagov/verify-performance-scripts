@@ -5,7 +5,6 @@ import pygsheets
 
 import performance.piwik as piwik
 import performance.billing as billing
-from performance.rp_federation_config import rp_mapping
 
 from performance import prod_config as config
 import performance
@@ -166,7 +165,7 @@ def add_piwik_data(date_start, df_verifications_by_rp):
 
 
 def get_df_for_all_rps(df_successes_rp):
-    all_rp_names = set(rp_mapping.values())
+    all_rp_names = set(config.rp_mapping.values())
     rp_names_with_successes = set(get_rp_names_from_df(df_successes_rp))
     rp_names_missing = sorted(list(all_rp_names.difference(rp_names_with_successes)))
     df_missing_rp = pandas.DataFrame.from_dict({k: [v, 0, 0] for k, v in enumerate(rp_names_missing)},

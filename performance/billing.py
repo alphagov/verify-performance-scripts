@@ -5,7 +5,6 @@ from datetime import timedelta, datetime
 import pandas
 
 from performance import prod_config as config
-from performance.rp_federation_config import rp_mapping
 
 
 def fromisoformat(date_string):
@@ -38,5 +37,5 @@ def augment_verifications_by_rp_with_rp_name(df_verifications_by_rp):
     for verifications_by_rp data
     :param df_verifications_by_rp: dataframe created from a verifications_by_rp report
     """
-    df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: rp_mapping[row['RP Entity Id']],
+    df_verifications_by_rp['rp'] = df_verifications_by_rp.apply(lambda row: config.rp_mapping[row['RP Entity Id']],
                                                                 axis=1)

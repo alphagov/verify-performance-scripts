@@ -20,7 +20,7 @@ def test_extract_verifications_by_rp_csv_for_date(mock_config, mock_pandas_read_
     mock_pandas_read_csv.assert_called_with(expected_verification_csv_filepath_to_load)
 
 
-@patch('performance.billing.rp_mapping', get_sample_rp_mapping())
+@patch('performance.billing.config.rp_mapping', get_sample_rp_mapping())
 def test_augment_verifications_by_rp_with_rp_name():
     sample_verifications_by_rp = get_sample_verifications_by_rp_dataframe()
     expected_transformed_data = get_sample_verifications_by_rp_dataframe(with_rp_name=True)

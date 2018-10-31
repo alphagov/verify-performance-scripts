@@ -6,9 +6,7 @@ import json
 import os
 import logging  # noqa
 
-
 from performance.tests.fixtures import get_sample_rp_mapping  # TODO fixture should move in here
-
 
 # logging.basicConfig(level=logging.DEBUG)  #noqa
 
@@ -35,12 +33,15 @@ class Config:
         self._validate_rp_information()
 
     def _get_piwik_token(self):
+        token = os.getenv('PIWIK_API_TOKEN')
+        if token:
+            return token
         with open(f'{self.VERIFY_DATA_PIPELINE_CONFIG_PATH}/credentials/piwik_token.json') as fileHandle:
             token = json.load(fileHandle)['production' if self.ENV == 'prod' else 'dr_token']
             return token
 
     def _load_json_configuration(self, name):
-        config_file = os.path.join(self.VERIFY_DATA_PIPELINE_CONFIG_PATH, 'configuration', '{}.json'.format(name))
+        config_file = os.path.join(Config.VERIFY_DATA_PIPELINE_CONFIG_PATH, 'configuration', '{}.json'.format(name))
         with open(config_file) as f:
             return json.load(f)
 
@@ -50,7 +51,6 @@ class Config:
             raise LookupError('RP information and RP mappings are different:', diff)
 
 
-# TODO should the below move into a JSON file?
 _sample_rp_information = [
     {
         "rp_name": "RP 1",
@@ -83,11 +83,16 @@ _sample_rp_information = [
 ]
 
 
-class TestConfig(Config):
+class TestConfig:
     ENV = 'test'
+    VERIFY_DATA_PIPELINE_CONFIG_PATH = 'path'
+    PIWIK_PERIOD = 'week'
+    PIWIK_LIMIT = '-1'
+    PIWIK_BASE_URL = 'url'
+    DEFAULT_OUTPUT_PATH = 'path'
+    GSHEETS_CREDENTIALS_FILE = 'file'
 
     def __init__(self):
         self.PIWIK_AUTH_TOKEN = "DUMMY_PIWIK_TOKEN"
         self.rp_information = {rp['rp_name']: rp for rp in _sample_rp_information}
         self.rp_mapping = get_sample_rp_mapping()
-        self._validate_rp_information()
