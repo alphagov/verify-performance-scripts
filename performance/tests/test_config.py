@@ -24,6 +24,10 @@ RP_INFORMATION_STREAM = """
   }]
 """
 
+PIWIK_TOKEN_STREAM = """
+{"production": "123", "dr_token": "234" }
+"""
+
 
 @patch('performance.config.Config.VERIFY_DATA_PIPELINE_CONFIG_PATH', 'config-path')
 def test_instantiation_loads_rp_config():
@@ -31,11 +35,16 @@ def test_instantiation_loads_rp_config():
 
     verify_data_pipeline_config_path = 'config-path'
 
+    mock_open_piwik_token = mock_open(read_data=PIWIK_TOKEN_STREAM)
     mock_open_rp_information = mock_open(read_data=RP_INFORMATION_STREAM)
     mock_open_rp_mapping = mock_open(read_data=RP_MAPPING_STREAM)
 
     m = mock_open()
-    m.side_effect = [mock_open_rp_information.return_value, mock_open_rp_mapping.return_value]
+    m.side_effect = [
+        mock_open_piwik_token.return_value,
+        mock_open_rp_information.return_value,
+        mock_open_rp_mapping.return_value
+    ]
 
     with patch('performance.config.open', m, create=True) as mock_main_open:
         config = performance.config.Config()
