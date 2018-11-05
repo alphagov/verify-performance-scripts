@@ -1,4 +1,6 @@
+import json
 import os
+import tempfile
 
 import pandas
 import pygsheets
@@ -9,7 +11,6 @@ import performance.billing as billing
 from performance import prod_config as config
 import performance
 from performance.reports.tests import conftest
-
 
 RP_REPORT_COLUMNS = [
     'rp',
@@ -74,7 +75,7 @@ def test_upload(gsheets_key, date_start):
     # because if you want to test the upload process, you don't want to have to wait around
     # for Piwik - any data will do.
     config = performance.config.TestConfig()
-    pygsheets_client = pygsheets.authorize(service_file=config.GSHEETS_CREDENTIALS_FILE)
+    pygsheets_client = get_pygsheets_client()
     for rp_info in config.rp_information.values():
         rp_info['sheet_key'] = gsheets_key
 
@@ -119,9 +120,37 @@ def export_metrics_to_csv(df_export, report_output_path, date_start):
 
 
 def export_metrics_to_google_sheets(df_export, date_start):
-    pygsheets_client = pygsheets.authorize(service_file=config.GSHEETS_CREDENTIALS_FILE)
+    pygsheets_client = get_pygsheets_client()
     exporter = GoogleSheetsRelyingPartyReportExporter(config, pygsheets_client)
     exporter.export(df_export, column_heading=date_start)
+
+
+def get_pygsheets_client():
+    google_auth_private_key_id = os.getenv('GOOGLE_AUTH_PRIVATE_KEY_ID')
+    if not google_auth_private_key_id:
+        return pygsheets.authorize(service_file=config.GSHEETS_CREDENTIALS_FILE)
+
+    creds = {
+        "type": "service_account",
+        "project_id": "verify-performance",
+        "private_key_id": os.getenv('GOOGLE_AUTH_PRIVATE_KEY_ID'),
+        # Private key cannot be set in `.env` at the moment and must therefore be defined in the
+        # shell when running locally.
+        "private_key": os.getenv('GOOGLE_AUTH_PRIVATE_KEY'),
+        "client_email": os.getenv('GOOGLE_AUTH_CLIENT_EMAIL'),
+        "client_id": os.getenv('GOOGLE_AUTH_CLIENT_ID'),
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": os.getenv('GOOGLE_AUTH_CLIENT_CERT_URL')
+    }
+    temp = tempfile.NamedTemporaryFile(delete=False, mode="w+t")
+    temp.write(json.dumps(creds))
+    temp.close()
+    try:
+        return pygsheets.authorize(service_file=temp.name)
+    finally:
+        os.unlink(temp.name)
 
 
 def generate_weekly_report_for_date(date_start, report_output_path):
