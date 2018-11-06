@@ -1,15 +1,13 @@
 import os
 
 import pandas
-import pygsheets
 
+import performance
 import performance.piwik as piwik
 import performance.billing as billing
-
 from performance import prod_config as config
-import performance
+from performance.gsheets import get_pygsheets_client
 from performance.reports.tests import conftest
-
 
 RP_REPORT_COLUMNS = [
     'rp',
@@ -74,7 +72,7 @@ def test_upload(gsheets_key, date_start):
     # because if you want to test the upload process, you don't want to have to wait around
     # for Piwik - any data will do.
     config = performance.config.TestConfig()
-    pygsheets_client = pygsheets.authorize(service_file=config.GSHEETS_CREDENTIALS_FILE)
+    pygsheets_client = get_pygsheets_client()
     for rp_info in config.rp_information.values():
         rp_info['sheet_key'] = gsheets_key
 
@@ -119,7 +117,7 @@ def export_metrics_to_csv(df_export, report_output_path, date_start):
 
 
 def export_metrics_to_google_sheets(df_export, date_start):
-    pygsheets_client = pygsheets.authorize(service_file=config.GSHEETS_CREDENTIALS_FILE)
+    pygsheets_client = get_pygsheets_client()
     exporter = GoogleSheetsRelyingPartyReportExporter(config, pygsheets_client)
     exporter.export(df_export, column_heading=date_start)
 
