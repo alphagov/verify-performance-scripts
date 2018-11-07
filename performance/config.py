@@ -8,7 +8,7 @@ import logging  # noqa
 
 from performance.tests.fixtures import get_sample_rp_mapping  # TODO fixture should move in here
 
-# logging.basicConfig(level=logging.DEBUG)  #noqa
+logging.basicConfig(level=logging.INFO)  # noqa
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -16,6 +16,8 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 class Config:
     ENV = 'prod'
 
+    S3_BILLING_REPORTS_BUCKET = 'govukverify-hub-prod-billing-reports'
+    S3_VERIFICATIONS_DIRECTORY = 'rp'
     VERIFY_DATA_PIPELINE_CONFIG_PATH = os.path.abspath(
         os.path.join(BASE_DIR, '..', 'verify-data-pipeline-config'))
     PIWIK_PERIOD = 'week'
@@ -86,6 +88,8 @@ _sample_rp_information = [
 class TestConfig:
     ENV = 'test'
     VERIFY_DATA_PIPELINE_CONFIG_PATH = 'path'
+    S3_BILLING_REPORTS_BUCKET = 'billing_reports_bucket'
+    S3_VERIFICATIONS_DIRECTORY = 'rp'
     PIWIK_PERIOD = 'week'
     PIWIK_LIMIT = '-1'
     PIWIK_BASE_URL = 'url'
