@@ -1,11 +1,11 @@
 SHELL := /bin/bash
-VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/venv || echo $$VIRTUAL_ENV)
+VIRTUALENV_ROOT := $(shell [ -z $$VIRTUAL_ENV ] && echo $$(pwd)/verify-performance-scripts-venv || echo $$VIRTUAL_ENV)
 PYTEST_ARGS := -s
 
 # Create virtual environment and install a known stable version of pip.
 .PHONY: virtualenv
 virtualenv:
-	[ -z $$VIRTUAL_ENV ] && [ ! -d venv ] && python3 -m venv venv || true
+	[ -z $$VIRTUAL_ENV ] && [ ! -d verify-performance-scripts-venv ] && python3 -m venv verify-performance-scripts-venv || true
 	${VIRTUALENV_ROOT}/bin/pip install "pip >=18.0,<19.0"
 
 # Install non-dev dependencies.
@@ -50,4 +50,4 @@ test-flake8: virtualenv
 # Run unit tests.
 .PHONY: test-unit
 test-unit: virtualenv
-	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
+	ENV=test ${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
