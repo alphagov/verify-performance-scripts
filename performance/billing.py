@@ -1,10 +1,12 @@
 import os
 import argparse
+import logging
 from datetime import timedelta, datetime
 
 import pandas
 
 from performance import prod_config as config
+from performance.aws import get_report_file
 
 
 def fromisoformat(date_string):
@@ -22,10 +24,25 @@ def extract_verifications_by_rp_csv_for_date(date_start):
     :return: pandas.Dataframe with non transformed data with matching columns to the original verifications_by_rp
     """
     date_end = fromisoformat(date_start) + timedelta(days=6)
-    verifications_by_rp_csv_path = os.path.join(config.VERIFY_DATA_PIPELINE_CONFIG_PATH,
-                                                'data',
-                                                'verifications',
-                                                f'verifications_by_rp_{date_start}_{date_end}.csv')
+    file_name = f'verifications_by_rp_{date_start}_{date_end}.csv'
+    verifications_directory = os.path.join(config.VERIFY_DATA_PIPELINE_CONFIG_PATH,
+                                           'data',
+                                           'verifications')
+    verifications_by_rp_csv_path = os.path.join(verifications_directory, file_name)
+
+    if os.path.exists(verifications_by_rp_csv_path):
+        logging.info(f'Using local copy of {file_name}')
+    else:
+        logging.info(f'Downloading verifications report: {file_name}')
+        if not os.path.exists(verifications_directory):
+            logging.info('Creating data/verifications directories')
+            os.makedirs(verifications_directory)
+
+        get_report_file(
+            config.S3_BILLING_REPORTS_BUCKET,
+            os.path.join(config.S3_VERIFICATIONS_DIRECTORY, file_name),
+            verifications_by_rp_csv_path
+        )
 
     df_verifications_by_rp = pandas.read_csv(verifications_by_rp_csv_path)
     return df_verifications_by_rp
