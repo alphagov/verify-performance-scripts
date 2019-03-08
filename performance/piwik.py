@@ -31,7 +31,7 @@ class PiwikClient:
         }
 
         response = requests.get(self.piwik_base_url, qs)
-
+        
         raw_result = response.json()
         return raw_result.get('value', 0)
 
