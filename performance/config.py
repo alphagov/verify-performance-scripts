@@ -22,7 +22,7 @@ class Config:
         os.path.join(BASE_DIR, '..', 'verify-data-pipeline-config'))
     PIWIK_PERIOD = 'week'
     PIWIK_LIMIT = '-1'
-    PIWIK_BASE_URL = 'https://analytics-hub-prod-a-dmz.ida.digital.cabinet-office.gov.uk/index.php'
+    PIWIK_BASE_URL = 'https://analytics.tools.signin.service.gov.uk/index.php'
     DEFAULT_OUTPUT_PATH = os.path.join(BASE_DIR, 'output')
     # This is only used if Google auth credentials aren't already present in environment variables See
     # `performance.gsheets.get_pygsheets_client` for implementation details.
