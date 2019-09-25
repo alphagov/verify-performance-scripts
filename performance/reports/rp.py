@@ -15,11 +15,11 @@ RP_REPORT_COLUMNS = [
     'success',
     'success_fraction_signup',
     'success_fraction_signin',
-    'visits_will_not_work',
-    'visits_might_not_work',
     'overall_success_rate',
     'number_of_signups',
     'number_of_signins'
+    'visits_will_not_work',
+    'visits_might_not_work',
 ]
 
 RP_REPORT_OUTPUT_FOLDER = "rp_report"
@@ -59,11 +59,12 @@ class GoogleSheetsRelyingPartyReportExporter:
             row.success,
             row.success_fraction_signup,
             row.success_fraction_signin,
-            row.visits_will_not_work,
-            row.visits_might_not_work,
             row.overall_success_rate,
             row.number_of_signups,
-            row.number_of_signins
+            row.number_of_signins,
+            row.visits_will_not_work,
+            row.visits_might_not_work
+            
         ]
 
 
