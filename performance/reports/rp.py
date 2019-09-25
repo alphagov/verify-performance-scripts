@@ -19,7 +19,7 @@ RP_REPORT_COLUMNS = [
     'number_of_signups',
     'number_of_signins'
     'visits_will_not_work',
-    'visits_might_not_work',
+    'visits_might_not_work'
 ]
 
 RP_REPORT_OUTPUT_FOLDER = "rp_report"
