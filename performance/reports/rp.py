@@ -15,6 +15,9 @@ RP_REPORT_COLUMNS = [
     'success',
     'success_fraction_signup',
     'success_fraction_signin',
+    'overall_success_rate',
+    'number_of_signups',
+    'number_of_signins'
     'visits_will_not_work',
     'visits_might_not_work'
 ]
@@ -56,8 +59,12 @@ class GoogleSheetsRelyingPartyReportExporter:
             row.success,
             row.success_fraction_signup,
             row.success_fraction_signin,
+            row.overall_success_rate,
+            row.number_of_signups,
+            row.number_of_signins,
             row.visits_will_not_work,
-            row.visits_might_not_work,
+            row.visits_might_not_work
+            
         ]
 
 
@@ -144,6 +151,9 @@ def transform_metrics(df):
     df['success'] = df['signin_success'] + df['signup_success']
     df['success_fraction_signup'] = df['signup_success'] / df['success']
     df['success_fraction_signin'] = df['signin_success'] / df['success']
+    df['overall_success_rate'] = df['success'] / df['all_referrals_with_intent']
+    df['number_of_signups'] = df['success_fraction_signup'] * df['success']
+    df['number_of_signins'] = df['success_fraction_signin'] * df['success']
     # Note: The below metrics are no longer used, and so have been disabled.
     # df['signin_rate (deprecated)'] = df['signin_success'] / df['signin_attempt']
     # df['signup_rate (deprecated)'] = df['signup_success'] / df['signup_attempt']
