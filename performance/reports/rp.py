@@ -17,7 +17,7 @@ RP_REPORT_COLUMNS = [
     'success_fraction_signin',
     'overall_success_rate',
     'number_of_signups',
-    'number_of_signins'
+    'number_of_signins',
     'visits_will_not_work',
     'visits_might_not_work'
 ]
@@ -25,7 +25,7 @@ RP_REPORT_COLUMNS = [
 RP_REPORT_OUTPUT_FOLDER = "rp_report"
 
 # TODO this should come from config
-LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS"]
+LOA1_RP_LIST = ["DFT DVLA VDL", "Get your State Pension", "NHS TRS", "NHS Pension Awards"]
 
 
 class GoogleSheetsRelyingPartyReportExporter:
@@ -64,7 +64,7 @@ class GoogleSheetsRelyingPartyReportExporter:
             row.number_of_signins,
             row.visits_will_not_work,
             row.visits_might_not_work
-            
+
         ]
 
 
